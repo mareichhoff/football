@@ -53,9 +53,9 @@ enum e_ButtonFunction {
 class IHIDevice {
 
   public:
-    virtual ~IHIDevice() {}
+    virtual ~IHIDevice() { DO_VALIDATION;}
 
-    virtual void Reset() {};
+    virtual void Reset() { DO_VALIDATION;};
 
     virtual bool GetButton(e_ButtonFunction buttonFunction) = 0;
     virtual bool GetPreviousButtonState(e_ButtonFunction buttonFunction) = 0;

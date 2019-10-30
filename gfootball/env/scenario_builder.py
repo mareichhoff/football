@@ -49,7 +49,7 @@ class Scenario(object):
 
   def __init__(self, config):
     # Game config controls C++ engine and is derived from the main config.
-    self._scenario_cfg = libgame.ScenarioConfig()
+    self._scenario_cfg = libgame.ScenarioConfig.make()
     self._config = config
     self._active_team = Team.e_Left
     scenario = None
@@ -77,7 +77,10 @@ class Scenario(object):
     self._scenario_cfg.right_agents = self._config.number_of_right_players()
     self._scenario_cfg.offsides = self._config['offsides']
     self._scenario_cfg.render = self._config['render']
-    self._scenario_cfg.team_difficulty = self._config['team_difficulty']
+    self._scenario_cfg.left_team_difficulty = self._config[
+        'left_team_difficulty']
+    self._scenario_cfg.right_team_difficulty = self._config[
+        'right_team_difficulty']
     # This is needed to record 'game_engine_random_seed' in the dump.
     if 'game_engine_random_seed' not in self._config._values:
       self._config.set_scenario_value('game_engine_random_seed',

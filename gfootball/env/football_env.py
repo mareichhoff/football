@@ -46,7 +46,7 @@ class FootballEnv(gym.Env):
     self._players = self._construct_players(config['players'], player_config)
     self._env = football_env_wrapper.FootballEnvWrapper(self._config)
     self._num_actions = len(football_action_set.get_action_set(self._config))
-    self.last_observation = None
+    self._cached_observation = None
 
   @property
   def action_space(self):
@@ -164,29 +164,30 @@ class FootballEnv(gym.Env):
   def step(self, action):
     if self._agent:
       self._agent.set_action(action)
-    observation, reward, done = self._env.step(self._get_actions())
+    _, reward, done = self._env.step(self._get_actions())
     score_reward = reward
     if self._agent:
-      observation = self._convert_observations(observation, self._agent,
-                                               self._agent_left_position,
-                                               self._agent_right_position)
       reward = ([reward] * self._agent.num_controlled_left_players() +
                 [-reward] * self._agent.num_controlled_right_players())
-    self.last_observation = observation
-    return (observation, np.array(reward, dtype=np.float32), done,
+    self._cached_observation = None
+    return (self.observation(), np.array(reward, dtype=np.float32), done,
             {'score_reward': score_reward})
 
   def reset(self):
     self._env.reset()
     for player in self._players:
       player.reset()
-    observation = self._env.observation()
-    if self._agent:
-      observation = self._convert_observations(observation, self._agent,
-                                               self._agent_left_position,
-                                               self._agent_right_position)
-    self.last_observation = observation
-    return observation
+    self._cached_observation = None
+    return self.observation()
+
+  def observation(self):
+    if not self._cached_observation:
+      self._cached_observation = self._env.observation()
+      if self._agent:
+        self._cached_observation = self._convert_observations(
+            self._cached_observation, self._agent,
+            self._agent_left_position, self._agent_right_position)
+    return self._cached_observation
 
   def write_dump(self, name):
     return self._env.write_dump(name)
@@ -198,8 +199,14 @@ class FootballEnv(gym.Env):
     return self._env.get_state()
 
   def set_state(self, state):
+    self._cached_observation = None
     return self._env.set_state(state)
 
+  def get_tracker(self):
+    return self._env.get_tracker()
+
+  def set_tracker(self, tracker):
+    self._env.set_tracker(tracker)
 
   def render(self, mode='human'):
     return self._env.render(mode=mode)

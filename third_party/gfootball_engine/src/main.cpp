@@ -33,6 +33,7 @@
 #include "utils/objectloader.hpp"
 #include "utils/orbitcamera.hpp"
 #include "wrap_SDL_ttf.h"
+#include "game_env.hpp"
 
 using std::string;
 
@@ -42,96 +43,208 @@ using std::string;
 
 using namespace blunted;
 
-thread_local GameContext* context;
+thread_local GameEnv* game;
 
-GameContext& GetContext() { return *context; }
+void DoValidation() {
+  auto game = GetGame();
+  if (game) {
+    game->tracker->verify();
+  }
+}
 
-void SetContext(GameContext* c) { context = c; }
+GameEnv* GetGame() { return game; }
 
-boost::shared_ptr<Scene2D> GetScene2D() { return context->scene2D; }
+GameContext& GetContext() {
+  DO_VALIDATION;
+  return *game->context;
+}
 
-boost::shared_ptr<Scene3D> GetScene3D() { return context->scene3D; }
+void SetGame(GameEnv* c) { game = c; }
 
-GraphicsSystem* GetGraphicsSystem() { return context->graphicsSystem.get(); }
+boost::shared_ptr<Scene2D> GetScene2D() {
+  DO_VALIDATION;
+  return game->context->scene2D;
+}
 
-boost::shared_ptr<GameTask> GetGameTask() { return context->gameTask; }
+boost::shared_ptr<Scene3D> GetScene3D() {
+  DO_VALIDATION;
+  return game->context->scene3D;
+}
 
-boost::shared_ptr<MenuTask> GetMenuTask() { return context->menuTask; }
+GraphicsSystem* GetGraphicsSystem() {
+  DO_VALIDATION;
+  return game->context->graphicsSystem.get();
+}
 
-Properties* GetConfiguration() { return context->config; }
+boost::shared_ptr<GameTask> GetGameTask() {
+  DO_VALIDATION;
+  return game->context->gameTask;
+}
 
-ScenarioConfig& GetScenarioConfig() { return context->scenario_config; }
+boost::shared_ptr<MenuTask> GetMenuTask() {
+  DO_VALIDATION;
+  return game->context->menuTask;
+}
 
-GameConfig& GetGameConfig() { return context->game_config; }
+Properties* GetConfiguration() {
+  DO_VALIDATION;
+  return game->context->config;
+}
 
-const std::vector<IHIDevice*>& GetControllers() { return context->controllers; }
+ScenarioConfig& GetScenarioConfig() {
+  DO_VALIDATION;
+  return *(game->context->scenario_config);
+}
+
+GameConfig& GetGameConfig() {
+  DO_VALIDATION;
+  return game->context->game_config;
+}
+
+const std::vector<IHIDevice*>& GetControllers() {
+  DO_VALIDATION;
+  return game->context->controllers;
+}
 
 void randomize(unsigned int seed) {
+  DO_VALIDATION;
   srand(seed);
   rand(); // mingw32? buggy compiler? first value seems bogus
   randomseed(seed); // for the boost random
 }
 
 void run_game(Properties* input_config) {
-  context->config = input_config;
-  auto& game_config = GetGameConfig();
-
-  Initialize(*context->config);
+  DO_VALIDATION;
+  game->context->config = input_config;
+  Initialize(*game->context->config);
   randomize(0);
 
   // initialize systems
-  context->graphicsSystem.reset(new GraphicsSystem());
-  context->graphicsSystem->Initialize(*context->config);
+  game->context->graphicsSystem.reset(new GraphicsSystem());
+  game->context->graphicsSystem->Initialize(*game->context->config);
 
   // init scenes
 
-  context->scene2D.reset(new Scene2D(*context->config));
-  context->graphicsSystem->Create2DScene(context->scene2D);
-  context->scene2D->Init();
-  context->scene3D.reset(new Scene3D());
-  context->graphicsSystem->Create3DScene(context->scene3D);
-  context->scene3D->Init();
+  game->context->scene2D.reset(new Scene2D(*game->context->config));
+  game->context->graphicsSystem->Create2DScene(game->context->scene2D);
+  game->context->scene2D->Init();
+  game->context->scene3D.reset(new Scene3D());
+  game->context->graphicsSystem->Create3DScene(game->context->scene3D);
+  game->context->scene3D->Init();
 
   for (int x = 0; x < 2 * MAX_PLAYERS; x++) {
-    context->controllers.push_back(new AIControlledKeyboard());
+    DO_VALIDATION;
+    game->context->controllers.push_back(new AIControlledKeyboard());
   }
   // sequences
 
-  context->gameTask = boost::shared_ptr<GameTask>(new GameTask());
-  std::string fontfilename = context->config->Get(
+  game->context->gameTask = boost::shared_ptr<GameTask>(new GameTask());
+  std::string fontfilename = game->context->config->Get(
       "font_filename", "media/fonts/alegreya/AlegreyaSansSC-ExtraBold.ttf");
-  context->font = GetFile(fontfilename);
-  context->defaultFont = TTF_OpenFontIndexRW(
-      SDL_RWFromConstMem(context->font.data(), context->font.size()), 0, 32, 0);
-  if (!context->defaultFont)
+  game->context->font = GetFile(fontfilename);
+  game->context->defaultFont =
+      TTF_OpenFontIndexRW(SDL_RWFromConstMem(game->context->font.data(),
+                                             game->context->font.size()),
+                          0, 32, 0);
+  if (!game->context->defaultFont)
     Log(e_FatalError, "football", "main",
         "Could not load font " + fontfilename);
-  context->defaultOutlineFont = TTF_OpenFontIndexRW(
-      SDL_RWFromConstMem(context->font.data(), context->font.size()), 0, 32, 0);
-  TTF_SetFontOutline(context->defaultOutlineFont, 2);
-  context->menuTask = boost::shared_ptr<MenuTask>(
-      new MenuTask(5.0f / 4.0f, 0, context->defaultFont,
-                   context->defaultOutlineFont, context->config));
+  game->context->defaultOutlineFont =
+      TTF_OpenFontIndexRW(SDL_RWFromConstMem(game->context->font.data(),
+                                             game->context->font.size()),
+                          0, 32, 0);
+  TTF_SetFontOutline(game->context->defaultOutlineFont, 2);
+  game->context->menuTask = boost::shared_ptr<MenuTask>(
+      new MenuTask(5.0f / 4.0f, 0, game->context->defaultFont,
+                   game->context->defaultOutlineFont, game->context->config));
 }
   // fire!
 
 void quit_game() {
-  context->gameTask.reset();
-  context->menuTask.reset();
+  DO_VALIDATION;
+  game->context->gameTask.reset();
+  game->context->menuTask.reset();
 
-  context->scene2D.reset();
-  context->scene3D.reset();
+  game->context->scene2D.reset();
+  game->context->scene3D.reset();
 
-  for (unsigned int i = 0; i < context->controllers.size(); i++) {
-    delete context->controllers[i];
+  for (unsigned int i = 0; i < game->context->controllers.size(); i++) {
+    DO_VALIDATION;
+    delete game->context->controllers[i];
   }
-  context->controllers.clear();
+  game->context->controllers.clear();
 
-  TTF_CloseFont(context->defaultFont);
-  TTF_CloseFont(context->defaultOutlineFont);
+  TTF_CloseFont(game->context->defaultFont);
+  TTF_CloseFont(
+      game->context->defaultOutlineFont);
 
-  delete context->config;
+  delete game->context->config;
 
   Exit();
 }
 
+void Tracker::setSession(int id) {
+  session = id;
+  if (!sessions.count(session)) {
+    sessions[session] = -1;
+  }
+}
+
+void Tracker::disable() { session = -1; }
+
+void Tracker::reset() {
+  session = -1;
+  failure_pos = -1;
+  sessions.clear();
+  std::cout << "Tracker: validating [" << start << "," << end
+            << "], step: " << step << std::endl;
+}
+
+bool Tracker::isFailure() { return failure_pos > -1; }
+
+void Tracker::verify_internal(int pos) {
+  if (!game->context->gameTask->GetMatch()) return;
+
+  string stack;
+  if (!stack_trace.count(pos)) {
+    if (traces.size() > 100000) {
+      Log(blunted::e_FatalError, "Too many traces", "", "");
+    }
+    EnvState reader("");
+    GetGame()->ProcessState(&reader);
+    stack_trace[pos] = stack;
+    traces[pos] = reader.GetState();
+  } else if (failure_pos == -1 || failure_pos > pos) {
+    bool error = false;
+    if (stack != stack_trace[pos]) {
+      if (step == 1) {
+        Log(blunted::e_FatalError, "Stack trace mismatch", stack,
+            stack_trace[pos]);
+      } else {
+        error = true;
+      }
+    }
+    if (step == 1) {
+      EnvState reader("", traces[pos]);
+      GetGame()->ProcessState(&reader);
+    } else {
+      EnvState reader("");
+      GetGame()->ProcessState(&reader);
+      if (reader.GetState() != traces[pos]) {
+        error = true;
+      }
+    }
+    if (error) {
+      std::cout << "Error found at position: " << pos << std::endl;
+      failure_pos = pos;
+      start = std::max(pos - 2 * step, 0);
+      end = pos;
+      step = std::max(1, (end - start) / 1000);
+    }
+  }
+}
+
+void GameContext::ProcessState(EnvState* state) {
+  scenario_config->ProcessState(state);
+  state->process(step);
+}

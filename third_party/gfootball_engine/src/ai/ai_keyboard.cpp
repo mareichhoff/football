@@ -13,37 +13,46 @@
 
 #include "ai_keyboard.hpp"
 
-
 AIControlledKeyboard::AIControlledKeyboard() {
+  DO_VALIDATION;
   memset(buttons_pressed_, 0, sizeof(buttons_pressed_));
 }
 
 bool AIControlledKeyboard::GetButton(e_ButtonFunction buttonFunction) {
+  DO_VALIDATION;
   return buttons_pressed_[buttonFunction];
 }
 
-void AIControlledKeyboard::SetButton(e_ButtonFunction buttonFunction, bool state) {
+void AIControlledKeyboard::SetButton(e_ButtonFunction buttonFunction,
+                                     bool state) {
+  DO_VALIDATION;
   buttons_pressed_[buttonFunction] = state;
 }
 
-bool AIControlledKeyboard::GetPreviousButtonState(e_ButtonFunction buttonFunction) {
+bool AIControlledKeyboard::GetPreviousButtonState(
+    e_ButtonFunction buttonFunction) {
+  DO_VALIDATION;
   return false;
 }
 
 Vector3 AIControlledKeyboard::GetDirection() {
+  DO_VALIDATION;
   return direction_ * mirror;
 }
 
 void AIControlledKeyboard::SetDirection(const Vector3& new_direction) {
+  DO_VALIDATION;
   direction_ = new_direction;
 }
 
 void AIControlledKeyboard::Reset() {
+  DO_VALIDATION;
   direction_ = Vector3(0, 0, 0);
   memset(buttons_pressed_, 0, sizeof(buttons_pressed_));
 }
 
 void AIControlledKeyboard::ProcessState(EnvState* state) {
+  DO_VALIDATION;
   state->setValidate(false);
   state->process(mirror);
   state->process(direction_);
@@ -52,5 +61,6 @@ void AIControlledKeyboard::ProcessState(EnvState* state) {
 }
 
 void AIControlledKeyboard::Mirror(float mirror) {
+  DO_VALIDATION;
   this->mirror = mirror;
 }

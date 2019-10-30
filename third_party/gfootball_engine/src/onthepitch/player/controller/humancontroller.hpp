@@ -37,7 +37,7 @@ class HumanController : public PlayerController {
     virtual Vector3 GetDirection();
     virtual float GetFloatVelocity();
 
-    virtual void ProcessState(EnvState* state) {
+    virtual void ProcessState(EnvState* state) { DO_VALIDATION;
       ProcessPlayerController(state);
       hid->ProcessState(state);
       state->process(actionMode);
@@ -50,9 +50,9 @@ class HumanController : public PlayerController {
     }
     virtual int GetReactionTime_ms();
 
-    IHIDevice *GetHIDevice() { return hid; }
+    IHIDevice *GetHIDevice() { DO_VALIDATION; return hid; }
 
-    int GetActionMode() { return actionMode; }
+    int GetActionMode() { DO_VALIDATION; return actionMode; }
 
     virtual void Reset();
 

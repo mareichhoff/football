@@ -37,7 +37,7 @@ typedef std::vector<std::string> StringVector;
 struct GameEnv {
   ~GameEnv();
   // Start the game (in separate process).
-  std::string start_game(GameConfig game_config);
+  void start_game(GameConfig game_config);
 
   // Get the current state of the game (observation).
   SharedInfo get_info();

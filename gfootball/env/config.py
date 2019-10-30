@@ -78,13 +78,15 @@ def get_agent_number_of_players(players):
 class Config(object):
 
   def __init__(self, values=None):
+    self._game_config = libgame.GameConfig()
     self._values = {
         'action_set': 'default',
         'custom_display_stats': None,
         'display_game_stats': True,
         'dump_full_episodes': False,
         'dump_scores': False,
-        'team_difficulty': 0.6,
+        'left_team_difficulty': 1.0,
+        'right_team_difficulty': 0.6,
         'players': ['agent:left_players=1'],
         'level': '11_vs_11_stochastic',
         'physics_steps_per_frame': 10,
@@ -142,12 +144,11 @@ class Config(object):
     self._values.update(config)
 
   def GameConfig(self):
-    cfg = libgame.GameConfig()
-    cfg.render_mode = libgame.e_RenderingMode.e_Onscreen if self[
+    self._game_config.render_mode = libgame.e_RenderingMode.e_Onscreen if self[
         'render'] else libgame.e_RenderingMode.e_Disabled
-    cfg.high_quality = self['render']
-    cfg.physics_steps_per_frame = self['physics_steps_per_frame']
-    return cfg
+    self._game_config.high_quality = self['render']
+    self._game_config.physics_steps_per_frame = self['physics_steps_per_frame']
+    return self._game_config
 
   def ScenarioConfig(self):
     return self._scenario_cfg

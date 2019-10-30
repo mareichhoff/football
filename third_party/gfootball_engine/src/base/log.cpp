@@ -25,6 +25,7 @@
 #include <string>
 
 std::string now() {
+  DO_VALIDATION;
   auto now = std::chrono::system_clock::now();
   time_t tt;
   tt = std::chrono::system_clock::to_time_t(now);
@@ -33,30 +34,32 @@ std::string now() {
 
 namespace blunted {
 
-  void Log(e_LogType logType, std::string className, std::string methodName, std::string message) {
-    std::string logTypeString;
+void Log(e_LogType logType, std::string className, std::string methodName,
+         std::string message) {
+  DO_VALIDATION;
+  std::string logTypeString;
 
-    switch (logType) {
-      case e_Warning:
-        logTypeString = "Warning";
-        break;
-      case e_Error:
-        logTypeString = "ERROR";
-        break;
-      case e_FatalError:
-        logTypeString = "FATAL ERROR !!! N00000 !!!";
-        break;
-    }
-
-    std::string date = now();
-    date = date.substr(0, date.length() - 1);
-    printf("%s [%s] in [%s::%s]: %s\n", date.c_str(),
-            logTypeString.c_str(), className.c_str(), methodName.c_str(),
-            message.c_str());
-
-    if (logType == e_FatalError) {
-      exit(1);
-    }
+  switch (logType) {
+    DO_VALIDATION;
+    case e_Warning:
+      logTypeString = "Warning";
+      break;
+    case e_Error:
+      logTypeString = "ERROR";
+      break;
+    case e_FatalError:
+      logTypeString = "FATAL ERROR !!! N00000 !!!";
+      break;
   }
 
+  std::string date = now();
+  date = date.substr(0, date.length() - 1);
+  printf("%s [%s] in [%s::%s]: %s\n", date.c_str(), logTypeString.c_str(),
+         className.c_str(), methodName.c_str(), message.c_str());
+
+  if (logType == e_FatalError) {
+    DO_VALIDATION;
+    exit(1);
+  }
+}
 }

@@ -67,17 +67,17 @@ enum e_InterruptAnim {
 };
 
 struct RotationSmuggle {
-  RotationSmuggle() {
+  RotationSmuggle() { DO_VALIDATION;
     begin = 0;
     end = 0;
   }
-  void operator = (const float &value) {
+  void operator = (const float &value) { DO_VALIDATION;
     begin = value;
     end = value;
   }
   radian begin;
   radian end;
-  void ProcessState(EnvState* state) {
+  void ProcessState(EnvState* state) { DO_VALIDATION;
     state->process(begin);
     state->process(end);
   }
@@ -104,7 +104,7 @@ struct Anim {
   Vector3 positionOffset;
   PlayerCommand originatingCommand;
   std::vector<Vector3> positions;
-  void ProcessState(EnvState* state) {
+  void ProcessState(EnvState* state) { DO_VALIDATION;
     state->process(anim);
     state->process(id);
     state->process(frameNum);
@@ -129,14 +129,14 @@ struct Anim {
 };
 
 struct AnimApplyBuffer {
-  AnimApplyBuffer() {
+  AnimApplyBuffer() { DO_VALIDATION;
     frameNum = 0;
     smooth = true;
     smoothFactor = 0.5f;
     noPos = false;
     orientation = 0;
   }
-  AnimApplyBuffer(const AnimApplyBuffer &src) {
+  AnimApplyBuffer(const AnimApplyBuffer &src) { DO_VALIDATION;
     anim = src.anim;
     frameNum = src.frameNum;
     smooth = src.smooth;
@@ -146,7 +146,7 @@ struct AnimApplyBuffer {
     orientation = src.orientation;
     offsets = src.offsets;
   }
-  void ProcessState(EnvState* state) {
+  void ProcessState(EnvState* state) { DO_VALIDATION;
     state->process(anim);
     state->process(frameNum);
     state->process(smooth);
@@ -189,7 +189,7 @@ struct SpatialState {
   Vector3 relBodyDirectionVecNonquantized;
   e_Foot foot;
 
-  void Mirror() {
+  void Mirror() { DO_VALIDATION;
     position.Mirror();
     actualMovement.Mirror();
     physicsMovement.Mirror();
@@ -200,7 +200,7 @@ struct SpatialState {
     positionOffsetMovement.Mirror();
   }
 
-  void ProcessState(EnvState* state) {
+  void ProcessState(EnvState* state) { DO_VALIDATION;
     state->process(position);
     state->process(angle);
     state->process(directionVec);
@@ -243,8 +243,8 @@ class HumanoidBase {
     virtual void CalculateGeomOffsets();
     void SetOffset(BodyPart body_part, float bias, const Quaternion &orientation, bool isRelative = false);
 
-    inline int GetFrameNum() { return currentAnim.frameNum; }
-    inline int GetFrameCount() { return currentAnim.anim->GetFrameCount(); }
+    inline int GetFrameNum() { DO_VALIDATION; return currentAnim.frameNum; }
+    inline int GetFrameCount() { DO_VALIDATION; return currentAnim.anim->GetFrameCount(); }
 
     inline Vector3 GetPosition() const { return spatialState.position; }
     inline Vector3 GetDirectionVec() const { return spatialState.directionVec; }
@@ -257,24 +257,24 @@ class HumanoidBase {
     inline e_FunctionType GetPreviousFunctionType() const { return previousAnim_functionType; }
     inline Vector3 GetMovement() const { return spatialState.movement; }
 
-    Vector3 GetGeomPosition() { return humanoidNode->GetPosition(); }
+    Vector3 GetGeomPosition() { DO_VALIDATION; return humanoidNode->GetPosition(); }
 
     int GetIdleMovementAnimID();
     void ResetPosition(const Vector3 &newPos, const Vector3 &focusPos);
     void OffsetPosition(const Vector3 &offset);
     void TripMe(const Vector3 &tripVector, int tripType);
 
-    boost::intrusive_ptr<Node> GetHumanoidNode() { return humanoidNode; }
-    boost::intrusive_ptr<Node> GetFullbodyNode() { return fullbodyNode; }
+    boost::intrusive_ptr<Node> GetHumanoidNode() { DO_VALIDATION; return humanoidNode; }
+    boost::intrusive_ptr<Node> GetFullbodyNode() { DO_VALIDATION; return fullbodyNode; }
 
     virtual float GetDecayingPositionOffsetLength() const { return decayingPositionOffset.GetLength(); }
     virtual float GetDecayingDifficultyFactor() const { return decayingDifficultyFactor; }
 
-    const Anim *GetCurrentAnim() { return &currentAnim; }
+    const Anim *GetCurrentAnim() { DO_VALIDATION; return &currentAnim; }
 
-    const NodeMap &GetNodeMap() { return nodeMap; }
+    const NodeMap &GetNodeMap() { DO_VALIDATION; return nodeMap; }
 
-    void Hide() { fullbodyNode->SetPosition(Vector3(1000, 1000, -1000)); hairStyle->SetPosition(Vector3(1000, 1000, -1000)); } // hax ;)
+    void Hide() { DO_VALIDATION; fullbodyNode->SetPosition(Vector3(1000, 1000, -1000)); hairStyle->SetPosition(Vector3(1000, 1000, -1000)); } // hax ;)
 
     void SetKit(boost::intrusive_ptr < Resource<Surface> > newKit);
 

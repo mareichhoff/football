@@ -22,15 +22,18 @@
 #include "blunted.hpp"
 
 GameTask::GameTask() {
+  DO_VALIDATION;
   // prohibits deletion of the scene before this object is dead
   scene3D = GetScene3D();
 }
 
 GameTask::~GameTask() {
+  DO_VALIDATION;
   StopMatch();
 }
 
 void GameTask::StartMatch() {
+  DO_VALIDATION;
   randomize(GetScenarioConfig().game_engine_random_seed);
   MatchData *matchData = GetMenuTask()->GetMatchData();
   assert(matchData);
@@ -39,14 +42,18 @@ void GameTask::StartMatch() {
 }
 
 void GameTask::StopMatch() {
+  DO_VALIDATION;
   if (match) {
+    DO_VALIDATION;
     match->Exit();
     match.reset();
   }
 }
 
 void GameTask::ProcessPhase() {
+  DO_VALIDATION;
   if (match) {
+    DO_VALIDATION;
     match->Process();
     match->PreparePutBuffers();
     match->FetchPutBuffers();
@@ -58,15 +65,19 @@ void GameTask::ProcessPhase() {
     match->GetOfficialPlayers(officials);
 
     for (auto player : players) {
+      DO_VALIDATION;
       if (match->GetPause() || player->NeedsModelUpdate()) {
+        DO_VALIDATION;
         player->UpdateFullbodyModel();
         boost::static_pointer_cast<Geometry>(player->GetFullbodyNode()->GetObject("fullbody"))->OnUpdateGeometryData();
       }
     }
     for (auto official : officials) {
+      DO_VALIDATION;
       official->UpdateFullbodyModel();
       boost::static_pointer_cast<Geometry>(official->GetFullbodyNode()->GetObject("fullbody"))->OnUpdateGeometryData();
     }
     match->UploadGoalNetting(); // won't this block the whole process thing too? (opengl busy == wait, while mutex locked == no process)
-  } // !match
+  }                             // !match
+  DO_VALIDATION;
 }

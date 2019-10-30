@@ -62,9 +62,9 @@ class Match {
     void RandomizeAdboards(boost::intrusive_ptr<Node> stadiumNode);
     void UpdateControllerSetup();
     void SpamMessage(const std::string &msg, int time_ms = 3000);
-    int GetScore(int teamID) { return matchData->GetGoalCount(teamID); }
-    Ball *GetBall() { return ball; }
-    Team *GetTeam(int teamID) { return teams[teamID]; }
+    int GetScore(int teamID) { DO_VALIDATION; return matchData->GetGoalCount(teamID); }
+    Ball *GetBall() { DO_VALIDATION; return ball; }
+    Team *GetTeam(int teamID) { DO_VALIDATION; return teams[teamID]; }
     void GetAllTeamPlayers(int teamID, std::vector<Player*> &players);
     void GetActiveTeamPlayers(int teamID, std::vector<Player*> &players);
     void GetOfficialPlayers(std::vector<PlayerBase*> &players);
@@ -75,46 +75,46 @@ class Match {
 
     void ResetSituation(const Vector3 &focusPos);
 
-    bool GetPause() { return pause; }
+    bool GetPause() { DO_VALIDATION; return pause; }
     void SetMatchPhase(e_MatchPhase newMatchPhase);
     e_MatchPhase GetMatchPhase() const { return matchPhase; }
 
-    void StartPlay() { inPlay = true; }
-    void StopPlay() { inPlay = false; }
+    void StartPlay() { DO_VALIDATION; inPlay = true; }
+    void StopPlay() { DO_VALIDATION; inPlay = false; }
     bool IsInPlay() const { return inPlay; }
 
-    void StartSetPiece() { inSetPiece = true; }
-    void StopSetPiece() { inSetPiece = false; }
+    void StartSetPiece() { DO_VALIDATION; inSetPiece = true; }
+    void StopSetPiece() { DO_VALIDATION; inSetPiece = false; }
     bool IsInSetPiece() const { return inSetPiece; }
-    Referee *GetReferee() { return referee; }
-    Officials *GetOfficials() { return officials; }
+    Referee *GetReferee() { DO_VALIDATION; return referee; }
+    Officials *GetOfficials() { DO_VALIDATION; return officials; }
 
-    void SetGoalScored(bool onOff) { if (onOff == false) ballIsInGoal = false; goalScored = onOff; }
+    void SetGoalScored(bool onOff) { DO_VALIDATION; if (onOff == false) ballIsInGoal = false; goalScored = onOff; }
     bool IsGoalScored() const { return goalScored; }
     Team* GetLastGoalTeam() const { return lastGoalTeam; }
-    void SetLastTouchTeamID(int id, e_TouchType touchType = e_TouchType_Intentional_Kicked) { lastTouchTeamIDs[touchType] = id; lastTouchTeamID = id; referee->BallTouched(); }
+    void SetLastTouchTeamID(int id, e_TouchType touchType = e_TouchType_Intentional_Kicked) { DO_VALIDATION; lastTouchTeamIDs[touchType] = id; lastTouchTeamID = id; referee->BallTouched(); }
     int GetLastTouchTeamID(e_TouchType touchType) const { return lastTouchTeamIDs[touchType]; }
     int GetLastTouchTeamID() const { return lastTouchTeamID; }
-    Team *GetLastTouchTeam() {
+    Team *GetLastTouchTeam() { DO_VALIDATION;
       if (lastTouchTeamID != -1)
         return teams[lastTouchTeamID];
       else
         return teams[first_team];
     }
-    Player *GetLastTouchPlayer() {
+    Player *GetLastTouchPlayer() { DO_VALIDATION;
       if (GetLastTouchTeam())
         return GetLastTouchTeam()->GetLastTouchPlayer();
       else
         return 0;
     }
-    float GetLastTouchBias(int decay_ms, unsigned long time_ms = 0) { if (GetLastTouchTeam()) return GetLastTouchTeam()->GetLastTouchBias(decay_ms, time_ms); else return 0; }
+    float GetLastTouchBias(int decay_ms, unsigned long time_ms = 0) { DO_VALIDATION; if (GetLastTouchTeam()) return GetLastTouchTeam()->GetLastTouchBias(decay_ms, time_ms); else return 0; }
     bool IsBallInGoal() const { return ballIsInGoal; }
 
     Team* GetBestPossessionTeam();
 
-    Player *GetDesignatedPossessionPlayer() { return designatedPossessionPlayer; }
-    Player *GetBallRetainer() { return ballRetainer; }
-    void SetBallRetainer(Player *retainer) {
+    Player *GetDesignatedPossessionPlayer() { DO_VALIDATION; return designatedPossessionPlayer; }
+    Player *GetBallRetainer() { DO_VALIDATION; return ballRetainer; }
+    void SetBallRetainer(Player *retainer) { DO_VALIDATION;
       ballRetainer = retainer;
     }
 
@@ -127,7 +127,7 @@ class Match {
     void UpdateIngameCamera();
 
 
-    boost::intrusive_ptr<Camera> GetCamera() { return camera; }
+    boost::intrusive_ptr<Camera> GetCamera() { DO_VALIDATION; return camera; }
 
     void GetState(SharedInfo* state);
     void ProcessState(EnvState* state);
@@ -140,11 +140,11 @@ class Match {
 
     void FollowCamera(Quaternion &orientation, Quaternion &nodeOrientation, Vector3 &position, float &FOV, const Vector3 &targetPosition, float zoom);
 
-    void SetAutoUpdateIngameCamera(bool autoUpdate = true) { if (autoUpdate != autoUpdateIngameCamera) { camPos.clear(); autoUpdateIngameCamera = autoUpdate; } }
+    void SetAutoUpdateIngameCamera(bool autoUpdate = true) { DO_VALIDATION; if (autoUpdate != autoUpdateIngameCamera) { DO_VALIDATION; camPos.clear(); autoUpdateIngameCamera = autoUpdate; } }
 
     int GetReplaySize_ms();
 
-    MatchData* GetMatchData() { return matchData; }
+    MatchData* GetMatchData() { DO_VALIDATION; return matchData; }
 
     float GetMatchDurationFactor() const { return matchDurationFactor; }
     bool GetUseMagnet() const { return _useMagnet; }
@@ -159,9 +159,9 @@ class Match {
     boost::signals2::signal<void(Match*)> sig_OnShortReplayMoment;
     boost::signals2::signal<void(Match*)> sig_OnCreatedMatch;
     boost::signals2::signal<void(Match*)> sig_OnExitedMatch;
-    int FirstTeam() { return first_team; }
-    int SecondTeam() { return second_team; }
-    bool isBallMirrored() { return ball_mirrored; }
+    int FirstTeam() { DO_VALIDATION; return first_team; }
+    int SecondTeam() { DO_VALIDATION; return second_team; }
+    bool isBallMirrored() { DO_VALIDATION; return ball_mirrored; }
 
   private:
     bool CheckForGoal(signed int side, const Vector3& previousBallPos);

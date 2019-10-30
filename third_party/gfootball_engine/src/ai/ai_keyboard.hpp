@@ -24,7 +24,7 @@ class AIControlledKeyboard : public IHIDevice {
 
   public:
     AIControlledKeyboard();
-    virtual ~AIControlledKeyboard() {}
+    virtual ~AIControlledKeyboard() { DO_VALIDATION;}
 
     virtual bool GetButton(e_ButtonFunction buttonFunction);
     virtual void SetButton(e_ButtonFunction buttonFunction, bool state);

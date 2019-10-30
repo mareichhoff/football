@@ -24,10 +24,12 @@
 #include <cmath>
 
 float GetQuantizedDirectionBias() {
+  DO_VALIDATION;
   return GetConfiguration()->GetReal("gameplay_quantizeddirectionbias", _default_QuantizedDirectionBias);
 }
 
 void QuantizeDirection(Vector3 &inputDirection, float bias) {
+  DO_VALIDATION;
 
   // digitize input
 
@@ -44,7 +46,9 @@ void QuantizeDirection(Vector3 &inputDirection, float bias) {
   inputDirection = (inputDirectionNorm * (1.0 - bias) + (Vector3(1, 0, 0).GetRotated2D(angle) * bias)).GetNormalized(inputDirectionNorm) * inputDirection.GetLength();
 }
 
-Vector3 GetProjectedCoord(const Vector3 &pos3D, boost::intrusive_ptr<Camera> camera) {
+Vector3 GetProjectedCoord(const Vector3 &pos3D,
+                          boost::intrusive_ptr<Camera> camera) {
+  DO_VALIDATION;
   Matrix4 rotMat;
   rotMat.ConstructInverse(camera->GetDerivedPosition(), Vector3(1, 1, 1), camera->GetDerivedRotation());
   float fov = camera->GetFOV();
@@ -91,8 +95,10 @@ Vector3 GetProjectedCoord(const Vector3 &pos3D, boost::intrusive_ptr<Camera> cam
 }
 
 int GetVelocityID(e_Velocity velo, bool treatDribbleAsWalk) {
+  DO_VALIDATION;
   int id = 0;
   switch (velo) {
+    DO_VALIDATION;
     case e_Velocity_Idle:
       id = 0;
       break;
@@ -115,7 +121,9 @@ int GetVelocityID(e_Velocity velo, bool treatDribbleAsWalk) {
 
 std::map < e_PositionName, std::vector<Stat> > defaultProfiles;
 
-float CalculateStat(float baseStat, float profileStat, float age, e_DevelopmentCurveType developmentCurveType) {
+float CalculateStat(float baseStat, float profileStat, float age,
+                    e_DevelopmentCurveType developmentCurveType) {
+  DO_VALIDATION;
 
 
   float idealAge = 27;

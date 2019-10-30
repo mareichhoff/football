@@ -31,7 +31,7 @@ class PlayerBase;
 
 class MentalImage {
  public:
-  MentalImage() {}
+  MentalImage() { DO_VALIDATION;}
   MentalImage(Match *match);
   void Mirror(bool team_0, bool team_1, bool ball);
   PlayerImage GetPlayerImage(PlayerBase* player) const;

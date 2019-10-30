@@ -26,9 +26,9 @@ import numpy as np
 class Player(player_base.PlayerBase):
 
   def __init__(self, player_config, env_config):
+    assert env_config["action_set"] == 'full'
     player_base.PlayerBase.__init__(self, player_config)
     self._observation = None
-    self._last_observation = None
     self._last_action = football_action_set.action_idle
     self._shoot_distance = 0.15
     self._pressure_enabled = False
@@ -215,9 +215,6 @@ class Player(player_base.PlayerBase):
 
   def take_action(self, observations):
     assert len(observations) == 1, 'Bot does not support multiple player control'
-    self._last_observation = self._observation
     self._observation = observations[0]
-    if not self._last_observation:
-      self._last_observation = self._observation
     self._last_action = self._get_action()
     return self._last_action

@@ -49,7 +49,7 @@ namespace blunted {
       bool Intersects(const vector_Planes &planes) const;
       bool Intersects(const AABB &src) const;
 
-      void MakeDirty() { radius_needupdate = true; center_needupdate = true; }
+      void MakeDirty() { DO_VALIDATION; radius_needupdate = true; center_needupdate = true; }
       Vector3 minxyz;
       Vector3 maxxyz;
       mutable real radius = 0.0f;

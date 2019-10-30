@@ -35,7 +35,7 @@ class GameTask {
 
     void ProcessPhase();
 
-    Match *GetMatch() { return match.get(); }
+    Match *GetMatch() { DO_VALIDATION; return match.get(); }
 
   protected:
     std::unique_ptr<Match> match;

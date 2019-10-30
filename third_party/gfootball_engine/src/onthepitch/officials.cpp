@@ -29,7 +29,13 @@
 
 #include "../main.hpp"
 
-Officials::Officials(Match *match, boost::intrusive_ptr<Node> fullbodySourceNode, std::map<Vector3, Vector3> &colorCoords, boost::intrusive_ptr < Resource<Surface> > kit, boost::shared_ptr<AnimCollection> animCollection) : match(match) {
+Officials::Officials(Match *match,
+                     boost::intrusive_ptr<Node> fullbodySourceNode,
+                     std::map<Vector3, Vector3> &colorCoords,
+                     boost::intrusive_ptr<Resource<Surface> > kit,
+                     boost::shared_ptr<AnimCollection> animCollection)
+    : match(match) {
+  DO_VALIDATION;
   ObjectLoader loader;
   boost::intrusive_ptr<Node> playerNode = loader.LoadObject("media/objects/players/player.object");
   playerNode->SetName("player");
@@ -69,6 +75,7 @@ Officials::Officials(Match *match, boost::intrusive_ptr<Node> fullbodySourceNode
 }
 
 Officials::~Officials() {
+  DO_VALIDATION;
   delete referee;
   delete linesmen[0];
   delete linesmen[1];
@@ -79,53 +86,66 @@ Officials::~Officials() {
 }
 
 void Officials::Mirror() {
+  DO_VALIDATION;
   referee->Mirror();
   linesmen[0]->Mirror();
   linesmen[1]->Mirror();
 }
 
-void Officials::GetPlayers(std::vector<PlayerBase*> &players) {
+void Officials::GetPlayers(std::vector<PlayerBase *> &players) {
+  DO_VALIDATION;
   players.push_back(referee);
   players.push_back(linesmen[0]);
   players.push_back(linesmen[1]);
 }
 
 void Officials::Process() {
+  DO_VALIDATION;
   referee->Process();
   if (GetScenarioConfig().render) {
+    DO_VALIDATION;
     linesmen[0]->Process();
     linesmen[1]->Process();
   }
 }
 
 void Officials::PreparePutBuffers() {
+  DO_VALIDATION;
   referee->PreparePutBuffers();
   linesmen[0]->PreparePutBuffers();
   linesmen[1]->PreparePutBuffers();
 }
 
 void Officials::FetchPutBuffers() {
+  DO_VALIDATION;
   referee->FetchPutBuffers();
   linesmen[0]->FetchPutBuffers();
   linesmen[1]->FetchPutBuffers();
 }
 
 void Officials::Put() {
+  DO_VALIDATION;
   if (GetScenarioConfig().render) {
+    DO_VALIDATION;
     referee->Put(false);
     linesmen[0]->Put(false);
     linesmen[1]->Put(false);
   }
 
-  if (referee->GetCurrentFunctionType() == e_FunctionType_Special && (match->GetReferee()->GetCurrentFoulType() == 2 || match->GetReferee()->GetCurrentFoulType() == 3)) {
+  if (referee->GetCurrentFunctionType() == e_FunctionType_Special &&
+      (match->GetReferee()->GetCurrentFoulType() == 2 ||
+       match->GetReferee()->GetCurrentFoulType() == 3)) {
+    DO_VALIDATION;
     BodyPart bodyPartName = right_elbow;
     if (referee->GetCurrentAnim()->anim->GetName().find("mirror") != std::string::npos) bodyPartName = left_elbow;
 
     const NodeMap &nodeMap = referee->GetNodeMap();
     auto bodyPart = nodeMap[bodyPartName];
     if (bodyPart) {
+      DO_VALIDATION;
       Vector3 position = bodyPart->GetDerivedPosition() + bodyPart->GetDerivedRotation() * Vector3(0.04, 0, -0.25); // -0.4
       if (match->GetReferee()->GetCurrentFoulType() == 2) {
+        DO_VALIDATION;
         yellowCard->SetPosition(position);
         yellowCard->SetRotation(bodyPart->GetDerivedRotation());
       } else {
@@ -134,12 +154,14 @@ void Officials::Put() {
       }
     }
   } else if (referee->GetPreviousFunctionType() == e_FunctionType_Special) {
+    DO_VALIDATION;
     yellowCard->SetPosition(Vector3(0, 0, -10));
     redCard->SetPosition(Vector3(0, 0, -10));
   }
 }
 
-void Officials::ProcessState(EnvState* state) {
+void Officials::ProcessState(EnvState *state) {
+  DO_VALIDATION;
   state->setValidate(false);
   referee->ProcessStateBase(state);
   linesmen[0]->ProcessStateBase(state);

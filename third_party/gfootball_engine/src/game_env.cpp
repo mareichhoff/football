@@ -34,18 +34,23 @@
 using std::string;
 
 void GameEnv::do_step(int count, bool render) {
+  DO_VALIDATION;
   while (!context->gameTask->GetMatch() || count--) {
+    DO_VALIDATION;
     context->menuTask->ProcessPhase();
     context->gameTask->ProcessPhase();
     if (render) {
+      DO_VALIDATION;
       context->graphicsSystem->GetTask()->GetPhase();
       context->graphicsSystem->GetTask()->ProcessPhase();
     }
   }
+  tracker->verify(true);
 }
 
 float Position::env_coord(int index) const {
   switch (index) {
+    DO_VALIDATION;
     case 0:
       return value[0] / X_FIELD_SCALE;
     case 1:
@@ -59,87 +64,98 @@ float Position::env_coord(int index) const {
 }
 
 std::string Position::debug() {
+  DO_VALIDATION;
   return std::to_string(value[0]) + "," + std::to_string(value[1]) + "," +
          std::to_string(value[2]);
 }
 
-GameEnv::~GameEnv() { }
-
-void setConfig(ScenarioConfig scenario_config) {
+void GameEnv::setConfig(ScenarioConfig& scenario_config) {
+  DO_VALIDATION;
   scenario_config.ball_position.coords[0] =
       scenario_config.ball_position.coords[0] * X_FIELD_SCALE;
   scenario_config.ball_position.coords[1] =
       scenario_config.ball_position.coords[1] * Y_FIELD_SCALE;
-  GetScenarioConfig() = scenario_config;
+  context->scenario_config = &scenario_config;
   std::vector<SideSelection> setup = GetMenuTask()->GetControllerSetup();
   CHECK(setup.size() == 2 * MAX_PLAYERS);
   int controller = 0;
   for (int x = 0; x < scenario_config.left_agents; x++) {
+    DO_VALIDATION;
     setup[controller++].side = -1;
   }
   while (controller < MAX_PLAYERS) {
+    DO_VALIDATION;
     setup[controller++].side = 0;
   }
   for (int x = 0; x < scenario_config.right_agents; x++) {
+    DO_VALIDATION;
     setup[controller++].side = 1;
   }
   while (controller < 2 * MAX_PLAYERS) {
+    DO_VALIDATION;
     setup[controller++].side = 0;
   }
   GetMenuTask()->SetControllerSetup(setup);
 }
 
-std::string GameEnv::start_game(GameConfig game_config) {
+void GameEnv::start_game(GameConfig& game_config) {
+  assert(context == nullptr);
   std::cout.precision(17);
   context = new GameContext();
-  SetContext(context);
+  SetGame(this);
   // feenableexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW);
-  GetGameConfig() = game_config;
+  context->game_config = game_config;
   std::cout << std::unitbuf;
 
   char* data_dir = getenv("GFOOTBALL_DATA_DIR");
   if (data_dir) {
+    DO_VALIDATION;
     GetGameConfig().data_dir = data_dir;
   }
   Properties* config = new Properties();
   config->Set("match_duration", 0.027);
   char* font_file = getenv("GFOOTBALL_FONT");
   if (font_file) {
+    DO_VALIDATION;
     config->Set("font_filename", font_file);
   }
   config->Set("game", 0);
   // Enable AI.
   config->SetBool("ai_keyboard", true);
   if (game_config.render_mode == e_Disabled) {
+    DO_VALIDATION;
     config->Set("graphics3d_renderer", "mock");
   } else if (game_config.render_mode == e_Offscreen) {
+    DO_VALIDATION;
     setenv("DISPLAY", ":63", 1);
     config->Set("graphics3d_renderer", "egl");
   }
   run_game(config);
-  setConfig(ScenarioConfig());
+  auto scenario_config = ScenarioConfig::make();
+  setConfig(*scenario_config);
   do_step(1, GetScenarioConfig().render);
-  return "ok";
 }
 
 SharedInfo GameEnv::get_info() {
+  DO_VALIDATION;
   SharedInfo info;
   GetGameTask()->GetMatch()->GetState(&info);
   info.step = context->step;
-  auto graphics = GetGraphicsSystem();
   return info;
 }
 
 screenshoot GameEnv::get_frame() {
-  SetContext(context);
+  SetGame(this);
   return GetGraphicsSystem()->GetScreen();
 }
 
 void GameEnv::action(int action, bool left_team, int player) {
-  SetContext(context);
+  SetGame(this);
+  DO_VALIDATION;
   int controller_id = player + (left_team ? 0 : 11);
   auto controller = static_cast<AIControlledKeyboard*>(GetControllers()[controller_id]);
   switch (Action(action)) {
+    DO_VALIDATION;
     case game_idle:
       break;
     case game_left:
@@ -239,33 +255,39 @@ void GameEnv::action(int action, bool left_team, int player) {
   }
 }
 
-string GameEnv::get_state() {
-  SetContext(context);
+std::string GameEnv::get_state() {
+  SetGame(this);
   EnvState reader("");
-  reader.process(context->step);
   ProcessState(&reader);
   return reader.GetState();
 }
 
 void GameEnv::set_state(const std::string& state) {
-  SetContext(context);
+  DO_VALIDATION;
+  SetGame(this);
   EnvState writer(state);
-  writer.process(context->step);
   ProcessState(&writer);
   if (!writer.eos()) {
+    DO_VALIDATION;
     Log(e_FatalError, "football", "main", "corrupted state");
   }
 }
 
+void GameEnv::set_tracker(Tracker* tracker) {
+  DO_VALIDATION;
+  this->tracker = tracker;
+}
 
 void GameEnv::step() {
-  SetContext(context);
+  DO_VALIDATION;
   // We do 10 environment steps per second, while game does 100 frames of
   // physics animation.
   int steps_to_do = GetGameConfig().physics_steps_per_frame;
   if (GetScenarioConfig().real_time) {
+    DO_VALIDATION;
     auto start = std::chrono::system_clock::now();
     for (int x = 1; x <= steps_to_do; x++) {
+      DO_VALIDATION;
       bool render_current_step =
           x * last_step_rendered_frames_ / steps_to_do !=
           (x - 1) * last_step_rendered_frames_ / steps_to_do;
@@ -275,9 +297,11 @@ void GameEnv::step() {
         std::chrono::system_clock::now() - start);
     if (elapsed.count() > 9 * (steps_to_do + 1) &&
         last_step_rendered_frames_ > 1) {
+      DO_VALIDATION;
       last_step_rendered_frames_--;
     } else if (elapsed.count() < 9 * (steps_to_do - 1) &&
                last_step_rendered_frames_ < steps_to_do) {
+      DO_VALIDATION;
       last_step_rendered_frames_++;
     }
   } else {
@@ -285,16 +309,30 @@ void GameEnv::step() {
     do_step(1, GetScenarioConfig().render);
   }
   if (context->gameTask->GetMatch()->IsInPlay()) {
+    DO_VALIDATION;
     context->step++;
   }
 }
 
-void GameEnv::reset(const ScenarioConfig& game_config) {
-  SetContext(context);
+void GameEnv::ProcessState(EnvState* state) {
+  DO_VALIDATION;
+  state->process(&this->state, sizeof(this->state));
+  state->process((void *)&context->step, sizeof(context->step));
+
+  state->process((void *)&context->rng, sizeof(context->rng));
+  state->process((void *)&context->rng_non_deterministic,
+                 sizeof(context->rng_non_deterministic));
+  GetGameTask()->GetMatch()->ProcessState(state);
+}
+
+void GameEnv::reset(ScenarioConfig& game_config) {
+  DO_VALIDATION;
+  SetGame(this);
   context->step = -1;
-  SetContext(context);
+  waiting_for_game_count = 0;
   setConfig(game_config);
   for (auto controller : GetControllers()) {
+    DO_VALIDATION;
     controller->Reset();
   }
   context->geometry_manager.RemoveUnused();
@@ -303,9 +341,11 @@ void GameEnv::reset(const ScenarioConfig& game_config) {
   context->vertices_manager.RemoveUnused();
   GetMenuTask()->SetMenuAction(e_MenuAction_Menu);
   for (int x = 0; x < 2; x++) {
+    DO_VALIDATION;
     context->menuTask->ProcessPhase();
     context->gameTask->ProcessPhase();
     if (GetScenarioConfig().render) {
+      DO_VALIDATION;
       context->graphicsSystem->GetTask()->GetPhase();
       context->graphicsSystem->GetTask()->ProcessPhase();
     }

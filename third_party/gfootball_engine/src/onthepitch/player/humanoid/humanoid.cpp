@@ -59,21 +59,31 @@ constexpr bool allowBallControlReQueue = true;
 constexpr bool allowTrapReQueue = true;
 constexpr bool allowPreTouchRotationSmuggle = false;
 
-Humanoid::Humanoid(Player *player, boost::intrusive_ptr<Node> humanoidSourceNode, boost::intrusive_ptr<Node> fullbodySourceNode, std::map<Vector3, Vector3> &colorCoords, boost::shared_ptr<AnimCollection> animCollection, boost::intrusive_ptr<Node> fullbodyTargetNode, boost::intrusive_ptr < Resource<Surface> > kit) :
-                  HumanoidBase(player, player->GetTeam()->GetMatch(), humanoidSourceNode, fullbodySourceNode, colorCoords, animCollection, fullbodyTargetNode, kit) {
+Humanoid::Humanoid(Player *player,
+                   boost::intrusive_ptr<Node> humanoidSourceNode,
+                   boost::intrusive_ptr<Node> fullbodySourceNode,
+                   std::map<Vector3, Vector3> &colorCoords,
+                   boost::shared_ptr<AnimCollection> animCollection,
+                   boost::intrusive_ptr<Node> fullbodyTargetNode,
+                   boost::intrusive_ptr<Resource<Surface> > kit)
+    : HumanoidBase(player, player->GetTeam()->GetMatch(), humanoidSourceNode,
+                   fullbodySourceNode, colorCoords, animCollection,
+                   fullbodyTargetNode, kit) {
+  DO_VALIDATION;
   team = CastPlayer()->GetTeam();
 }
 
-Humanoid::~Humanoid() {
-}
+Humanoid::~Humanoid() { DO_VALIDATION; }
 
 Player *Humanoid::CastPlayer() const { return static_cast<Player*>(player); }
 
 bool _PassFiddlingEnabled() {
+  DO_VALIDATION;
   return true;
 }
 
 void Humanoid::Process() {
+  DO_VALIDATION;
   auto currentMentalImage = match->GetMentalImage(mentalImageTime);
   // this might be the solution to long-term inbalance
   decayingPositionOffset *= 0.95f;
@@ -95,14 +105,16 @@ void Humanoid::Process() {
   assert(team);
   int teamID = team->GetID();
 
-/*
+  /*
 
-  if (currentAnim.positionOffset.GetLength() > 0.1f && interruptAnim == e_InterruptAnim_None) {
-    interruptAnim = e_InterruptAnim_Bump;
-  }
-*/
+    bump if (currentAnim.positionOffset.GetLength() > 0.1f && interruptAnim ==
+    e_InterruptAnim_None) { DO_VALIDATION; interruptAnim = e_InterruptAnim_Bump;
+    }
+  */
 
-  if (currentAnim.frameNum == currentAnim.anim->GetFrameCount() - 1 && interruptAnim == e_InterruptAnim_None) {
+  if (currentAnim.frameNum == currentAnim.anim->GetFrameCount() - 1 &&
+      interruptAnim == e_InterruptAnim_None) {
+    DO_VALIDATION;
     interruptAnim = e_InterruptAnim_Switch;
   }
 
@@ -112,43 +124,51 @@ void Humanoid::Process() {
   // already some anim interrupt waiting?
 
   if (mayReQueue) {
+    DO_VALIDATION;
     if (interruptAnim != e_InterruptAnim_None) {
+      DO_VALIDATION;
       mayReQueue = false;
     }
   }
 
-
   // may requeue on this frame?
 
-/* can't do this: requeued movement anims should be requeueable into touch anims
-  if (mayReQueue) { // never requeue a requeued anim
-    if (currentAnim.originatingInterrupt != e_Interrupt_None &&
-        currentAnim.originatingInterrupt != e_Interrupt_Switch) {
-    mayRequeue = false;
-  }*/
+  /* can't do this: requeued movement anims should be requeueable into touch
+    anims if (mayReQueue) { DO_VALIDATION; // never requeue a requeued anim if
+    (currentAnim.originatingInterrupt != e_Interrupt_None &&
+          currentAnim.originatingInterrupt != e_Interrupt_Switch) {
+    DO_VALIDATION; mayRequeue = false;
+    }*/
 
   if (mayReQueue) {
+    DO_VALIDATION;
     bool frameNumPredicate = false;
     float actionDistance = ((spatialState.position + spatialState.movement * 0.1f) - match->GetBall()->Predict(100).Get2D()).GetLength();
 
     int team_id = team->GetID() == match->SecondTeam() ? 1 : 0;
-    if (match->GetDesignatedPossessionPlayer() == player && actionDistance < 3.0f) {
+    if (match->GetDesignatedPossessionPlayer() == player &&
+        actionDistance < 3.0f) {
+      DO_VALIDATION;
       frameNumPredicate = ((match->GetActualTime_ms() + team_id * 10) % 20) ==
                           0;  // .. 1 .. 2 .. 1 .. 2 ..
 
     } else if (match->GetDesignatedPossessionPlayer() == player) {
+      DO_VALIDATION;
       frameNumPredicate = ((match->GetActualTime_ms() + team_id * 10) % 30) ==
                           0;  // .. 1 .. 2 .. x .. 1 .. 2 .. x ..
 
     } else if (team->GetDesignatedTeamPossessionPlayer() == player) {
+      DO_VALIDATION;
       frameNumPredicate = ((match->GetActualTime_ms() + team_id * 20) % 40) ==
                           0;  // .. 1 .. x .. 2 .. x .. 1 .. x .. 2 ..
 
     } else if (actionDistance < 5.0f) {
+      DO_VALIDATION;
       frameNumPredicate = ((match->GetActualTime_ms() + team_id * 20) % 50) ==
                           0;  // .. 1 .. x .. 2 .. x .. x ..
 
     } else if (actionDistance < 10.0f) {
+      DO_VALIDATION;
       frameNumPredicate = ((match->GetActualTime_ms() + team_id * 40) % 80) ==
                           0;  // .. 1 .. x .. x .. x .. 2 .. x .. x .. x ..
     }
@@ -156,38 +176,48 @@ void Humanoid::Process() {
     if (!frameNumPredicate) mayReQueue = false;
   }
 
-
   // right anim to requeue?
 
   if (mayReQueue) {
+    DO_VALIDATION;
 
     float ballDistance = (currentMentalImage->GetBallPrediction(500).Get2D() - spatialState.position).GetLength();
-    if (( (currentAnim.functionType == e_FunctionType_Movement && !CastPlayer()->HasPossession() && ballDistance < 16.0f) ||
-          (currentAnim.functionType == e_FunctionType_Movement && CastPlayer()->HasPossession()) || // passes / shot
-          (currentAnim.functionType == e_FunctionType_Trap && TouchPending()) ||
-          (currentAnim.functionType == e_FunctionType_BallControl && TouchPending()) ) &&
-          /* now done later on, else we can't requeue to pass/shot during trap/ballcontrol
-          (currentAnim.functionType == e_FunctionType_Trap && TouchPending() && allowTrapReQueue && currentAnim.frameNum <= maxTrapReQueueFrame) ||
-          (currentAnim.functionType == e_FunctionType_BallControl && TouchPending() && allowBallControlReQueue && currentAnim.frameNum <= maxBallControlReQueueFrame) ) &&
-          */
-        currentAnim.anim->GetVariableCache().incoming_special_state().empty() && currentAnim.anim->GetVariableCache().outgoing_special_state().empty()) {
+    if (((currentAnim.functionType == e_FunctionType_Movement &&
+          !CastPlayer()->HasPossession() && ballDistance < 16.0f) ||
+         (currentAnim.functionType == e_FunctionType_Movement &&
+          CastPlayer()->HasPossession()) ||  // passes / shot
+         (currentAnim.functionType == e_FunctionType_Trap && TouchPending()) ||
+         (currentAnim.functionType == e_FunctionType_BallControl &&
+          TouchPending())) &&
+        /* now done later on, else we can't requeue to pass/shot during
+        trap/ballcontrol (currentAnim.functionType == e_FunctionType_Trap &&
+        TouchPending() && allowTrapReQueue && currentAnim.frameNum <=
+        maxTrapReQueueFrame) || (currentAnim.functionType ==
+        e_FunctionType_BallControl && TouchPending() && allowBallControlReQueue
+        && currentAnim.frameNum <= maxBallControlReQueueFrame) ) &&
+        */
+        currentAnim.anim->GetVariableCache().incoming_special_state().empty() &&
+        currentAnim.anim->GetVariableCache().outgoing_special_state().empty()) {
+      DO_VALIDATION;
       mayReQueue = true;
     } else {
       mayReQueue = false;
     }
   }
 
-
   // okay, see if we need to requeue
 
   if (mayReQueue) {
+    DO_VALIDATION;
     interruptAnim = e_InterruptAnim_ReQueue;
   }
 
   if (interruptAnim != e_InterruptAnim_None) {
+    DO_VALIDATION;
     PlayerCommandQueue commandQueue;
 
     if (interruptAnim == e_InterruptAnim_Trip && tripType != 0) {
+      DO_VALIDATION;
       AddTripCommandToQueue(commandQueue, tripDirection, tripType);
       tripType = 0;
       commandQueue.push_back(GetBasicMovementCommand(tripDirection, spatialState.floatVelocity)); // backup, if there's no applicable trip anim
@@ -195,12 +225,12 @@ void Humanoid::Process() {
       CastPlayer()->RequestCommand(commandQueue);
     }
 
-
     // iterate through the command queue and pick the first that is applicable
 
     bool found = false;
     bool preferPassAndShot = false; // pass/shot and such; in that case we want trap/ballcontrol anims to be less prefered
     for (unsigned int i = 0; i < commandQueue.size(); i++) {
+      DO_VALIDATION;
 
       const PlayerCommand &command = commandQueue[i];
 
@@ -208,6 +238,7 @@ void Humanoid::Process() {
           command.desiredFunctionType == e_FunctionType_LongPass ||
           command.desiredFunctionType == e_FunctionType_HighPass ||
           command.desiredFunctionType == e_FunctionType_Shot) {
+        DO_VALIDATION;
         preferPassAndShot = true;
       }
       found = SelectAnim(command, interruptAnim, preferPassAndShot);
@@ -215,9 +246,11 @@ void Humanoid::Process() {
     }
 
     if (interruptAnim == e_InterruptAnim_Switch && !found) {
+      DO_VALIDATION;
       Log(e_Warning, "Humanoid", "Process", "RED ALERT! NO APPLICABLE ANIM FOUND! NOOOO!");
       Log(e_Warning, "Humanoid", "Process", "currentanimtype: " + currentAnim.anim->GetVariable("type"));
       for (unsigned int i = 0; i < commandQueue.size(); i++) {
+        DO_VALIDATION;
         Log(e_Warning, "Humanoid", "Process", "desiredanimtype:" + int_to_str(commandQueue[i].desiredFunctionType));
         Log(e_Warning, "Humanoid", "Process", "desired velo: " + real_to_str(commandQueue[i].desiredVelocityFloat));
         Log(e_Warning, "Humanoid", "Process", "desired direction: " + real_to_str(commandQueue[i].desiredDirection.coords[0]) + ", " + real_to_str(commandQueue[i].desiredDirection.coords[1]) + ", " + real_to_str(commandQueue[i].desiredDirection.coords[2]));
@@ -230,6 +263,7 @@ void Humanoid::Process() {
     }
 
     if (found) {
+      DO_VALIDATION;
       startPos = spatialState.position;
       startAngle = spatialState.angle;
 
@@ -254,18 +288,19 @@ void Humanoid::Process() {
 
       // if we just requeued, for example, from movement to ballcontrol, there's no reason we can not immediately requeue to another ballcontrol again (next time). only apply the initial requeue delay on subsequent anims of the same type
       // (so we can have a fast ballcontrol -> ballcontrol requeue, but after that, use the initial delay)
-      if (interruptAnim == e_InterruptAnim_ReQueue && previousAnim_functionType == currentAnim.functionType) {
+      if (interruptAnim == e_InterruptAnim_ReQueue &&
+          previousAnim_functionType == currentAnim.functionType) {
+        DO_VALIDATION;
         reQueueDelayFrames = initialReQueueDelayFrames; // don't try requeueing (some types of anims, see selectanim()) too often
       }
-
     }
-
   }
   reQueueDelayFrames = std::max(reQueueDelayFrames - 1, 0);
 
   interruptAnim = e_InterruptAnim_None;
 
   if (startPos.coords[2] != 0.f) {
+    DO_VALIDATION;
     Log(e_FatalError, "Humanoid", "Process", "BWAAAAAH FLYING PLAYERS!! height: " + real_to_str(startPos.coords[2]));
   }
 
@@ -275,15 +310,20 @@ void Humanoid::Process() {
   float oppLastTouchBias = match->GetTeam(abs(team->GetID() - 1))->GetLastTouchBias(240);
 
   if (CastPlayer() == match->GetDesignatedPossessionPlayer() &&
-    (
-      (lastTouchBias <= 0.01f && oppLastTouchBias <= 0.01f && currentAnim.functionType == e_FunctionType_Movement &&
-       ballDistanceNow < 0.6f && ballDistanceFuture > 0.65f && ballDistanceFuture > ballDistanceNow) // 0.5 / 0.6
+      ((lastTouchBias <= 0.01f && oppLastTouchBias <= 0.01f &&
+        currentAnim.functionType == e_FunctionType_Movement &&
+        ballDistanceNow < 0.6f && ballDistanceFuture > 0.65f &&
+        ballDistanceFuture > ballDistanceNow)  // 0.5 / 0.6
 
-      ||
+       ||
 
-      (lastTouchBias <= 0.7f && CastPlayer()->HasPossession() && currentAnim.functionType == e_FunctionType_Trip && ballDistanceNow < 0.4f)
+       (lastTouchBias <= 0.7f && CastPlayer()->HasPossession() &&
+        currentAnim.functionType == e_FunctionType_Trip &&
+        ballDistanceNow < 0.4f)
 
-    ) && match->GetBall()->Predict(0).coords[2] < 1.6f) {
+       ) &&
+      match->GetBall()->Predict(0).coords[2] < 1.6f) {
+    DO_VALIDATION;
 
     CastPlayer()->TriggerControlledBallCollision();
     //SetGreenDebugPilon(spatialState.position);
@@ -293,13 +333,16 @@ void Humanoid::Process() {
   bool controlledBallCollision = CastPlayer()->IsControlledBallCollisionTriggered();
   if (controlledBallCollision) CastPlayer()->ResetControlledBallCollisionTrigger();
   if (controlledBallCollision && currentAnim.touchFrame == -1) {
+    DO_VALIDATION;
     Vector3 currentBallVec = match->GetBall()->GetMovement();
     radian nextBodyAngle = startAngle + currentAnim.anim->GetOutgoingAngle() + currentAnim.anim->GetOutgoingBodyAngle() + currentAnim.rotationSmuggle.end;
 
     radian xRot = 0;
     radian yRot = 0;
     Vector3 touchVec = GetTrapVector(match, CastPlayer(), nextStartPos, nextStartAngle, nextBodyAngle, CalculateOutgoingMovement(currentAnim.positions), currentAnim, currentAnim.frameNum, spatialState, decayingPositionOffset, xRot, yRot);
-    if (currentAnim.originatingCommand.modifier & e_PlayerCommandModifier_KnockOn) {
+    if (currentAnim.originatingCommand.modifier &
+        e_PlayerCommandModifier_KnockOn) {
+      DO_VALIDATION;
       touchVec *= 1.35f;//1.2f;
     }
 
@@ -313,6 +356,7 @@ void Humanoid::Process() {
   // ---------------------- / EXPERIMENTAL ------------------------------------------------
 
   if (currentAnim.touchFrame == currentAnim.frameNum) {
+    DO_VALIDATION;
 
     Vector3 desiredBallPosition;
     boost::static_pointer_cast<FootballAnimationExtension>(currentAnim.anim->GetExtension("football"))->GetTouchPos(currentAnim.touchFrame, desiredBallPosition);
@@ -323,6 +367,7 @@ void Humanoid::Process() {
     float fullBallDistance = (match->GetBall()->Predict(0) - (currentAnim.touchPos + currentAnim.positionOffset)).GetLength();
 
     if (!currentAnim.anim->GetVariableCache().incoming_retain_state().empty()) {
+      DO_VALIDATION;
       fullBallDistance = 0.0f;
       touchableDistance = 1.0f;
     }
@@ -333,16 +378,24 @@ void Humanoid::Process() {
     bumpyRideBias = curve(bumpyRideBias, 0.5f);
     Vector3 currentBallVec = match->GetBall()->GetMovement();
 
-    if (fullBallDistance < touchableDistance && fabs(desiredBallHeight - match->GetBall()->Predict(0).coords[2]) < 1.0f) {
+    if (fullBallDistance < touchableDistance &&
+        fabs(desiredBallHeight - match->GetBall()->Predict(0).coords[2]) <
+            1.0f) {
+      DO_VALIDATION;
 
       radian nextBodyAngle = startAngle + currentAnim.anim->GetOutgoingAngle() + currentAnim.anim->GetOutgoingBodyAngle() + currentAnim.rotationSmuggle.end;
 
-      if (currentAnim.functionType == e_FunctionType_Trap || (currentAnim.functionType == e_FunctionType_BallControl && CastPlayer()->HasPossession() == false)) {
+      if (currentAnim.functionType == e_FunctionType_Trap ||
+          (currentAnim.functionType == e_FunctionType_BallControl &&
+           CastPlayer()->HasPossession() == false)) {
+        DO_VALIDATION;
         //printf("trap!\n");
         radian xRot = 0;
         radian yRot = 0;
         Vector3 touchVec = GetTrapVector(match, CastPlayer(), nextStartPos, nextStartAngle, nextBodyAngle, CalculateOutgoingMovement(currentAnim.positions), currentAnim, currentAnim.frameNum, spatialState, decayingPositionOffset, xRot, yRot);
-        if (currentAnim.originatingCommand.modifier & e_PlayerCommandModifier_KnockOn) {
+        if (currentAnim.originatingCommand.modifier &
+            e_PlayerCommandModifier_KnockOn) {
+          DO_VALIDATION;
           touchVec *= 1.35f;
         }
 
@@ -355,10 +408,13 @@ void Humanoid::Process() {
       }
 
       else if (currentAnim.functionType == e_FunctionType_BallControl) {
+        DO_VALIDATION;
         radian xRot = 0;
         radian yRot = 0;
         Vector3 touchVec = GetBallControlVector(match->GetBall(), CastPlayer(), nextStartPos, nextStartAngle, nextBodyAngle, CalculateOutgoingMovement(currentAnim.positions), currentAnim, currentAnim.frameNum, spatialState, decayingPositionOffset, xRot, yRot);
-        if (currentAnim.originatingCommand.modifier & e_PlayerCommandModifier_KnockOn) {
+        if (currentAnim.originatingCommand.modifier &
+            e_PlayerCommandModifier_KnockOn) {
+          DO_VALIDATION;
           touchVec *= 1.35f;
         }
 
@@ -373,6 +429,7 @@ void Humanoid::Process() {
       else if (currentAnim.functionType == e_FunctionType_ShortPass ||
                currentAnim.functionType == e_FunctionType_LongPass ||
                currentAnim.functionType == e_FunctionType_HighPass) {
+        DO_VALIDATION;
 
         Vector3 ballDirection = currentAnim.originatingCommand.touchInfo.desiredDirection;
         float ballPower = currentAnim.originatingCommand.touchInfo.desiredPower;
@@ -392,15 +449,18 @@ void Humanoid::Process() {
         float maxDeviationAngle = 0.15f * pi;
         radian angleDiff = tmpBallDirection.Get2D().GetAngle2D(ballDirection.Get2D());
         if (fabs(angleDiff) <= maxDeviationAngle) {
+          DO_VALIDATION;
           ballDirection = tmpBallDirection;
           ballPower = tmpBallPower;
           targetPlayer = tmpTargetPlayer;
         } else if (fabs(angleDiff) < 2.0f * maxDeviationAngle) {
+          DO_VALIDATION;
           // get as close as possible
           float clampedAngleDiff = clamp(angleDiff, -maxDeviationAngle, maxDeviationAngle);
           ballDirection = ballDirection.GetRotated2D(clampedAngleDiff);
 
           if (tmpTargetPlayer != targetPlayer) {
+            DO_VALIDATION;
             // if we can't make it to our refined target at all, just stick with original ballpower (think about refined target at ~180 deg, would be weird to pass forward with the power of that (unreachable) target)
             float refinedBias = NormalizedClamp(fabs(clampedAngleDiff), 0.0f, fabs(angleDiff));
             ballPower = ballPower * (1.0f - refinedBias) + tmpBallPower * refinedBias;
@@ -409,8 +469,7 @@ void Humanoid::Process() {
             ballPower = tmpBallPower;
           }
 
-        } // else: just stick to original
-
+        }  // else: just stick to original
 
         if (targetPlayer) team->SelectPlayer(targetPlayer);
         //if (targetPlayer) SetGreenDebugPilon(targetPlayer->GetPosition());
@@ -419,6 +478,7 @@ void Humanoid::Process() {
         Vector3 touchVec = ballDirection * 36 * (ballPower + 0.3f);
 
         if (_PassFiddlingEnabled()) {
+          DO_VALIDATION;
           //SetGreenDebugPilon(match->GetBall()->Predict(0).Get2D() + touchVec.Get2D() * 0.4f);
 
           touchVec = GetBestPossibleTouch(touchVec, currentAnim.functionType);
@@ -449,6 +509,7 @@ void Humanoid::Process() {
       }
 
       else if (currentAnim.functionType == e_FunctionType_Shot) {
+        DO_VALIDATION;
 
         // alter direction, if neeeded
         Vector3 ballDirection = currentAnim.originatingCommand.touchInfo.desiredDirection;
@@ -459,6 +520,7 @@ void Humanoid::Process() {
         float maxDeviationAngle = 0.1f * pi;
         radian angleDiff = ballDirectionAltered.Get2D().GetAngle2D(ballDirection.Get2D());
         if (fabs(angleDiff) > maxDeviationAngle) {
+          DO_VALIDATION;
           // get as close as possible
           float clampedAngleDiff = clamp(angleDiff, -maxDeviationAngle, maxDeviationAngle);
           ballDirection = ballDirection.GetRotated2D(clampedAngleDiff);
@@ -479,6 +541,7 @@ void Humanoid::Process() {
       }
 
       else if (currentAnim.functionType == e_FunctionType_Interfere) {
+        DO_VALIDATION;
         radian xRot = 0;
         radian yRot = 0;
         Vector3 touchVec = GetTrapVector(match, CastPlayer(), nextStartPos, nextStartAngle, nextBodyAngle, CalculateOutgoingMovement(currentAnim.positions), currentAnim, currentAnim.frameNum, spatialState, decayingPositionOffset, xRot, yRot);
@@ -497,6 +560,7 @@ void Humanoid::Process() {
       }
 
       else if (currentAnim.functionType == e_FunctionType_Deflect) {
+        DO_VALIDATION;
         bool canRetain = true; // can we grab hold of the ball?
         if (currentAnim.anim->GetVariable("outgoing_retain_state").compare("") == 0) canRetain = false; // not the right anim, hopeless!
         if (match->GetBallRetainer() != 0) canRetain = false; // somebody is already holding the ball :( (dafuq, this should not happen, right?)
@@ -505,6 +569,7 @@ void Humanoid::Process() {
         float reactionDifficulty = 0.0f;
         Player *lastTouchPlayer = match->GetTeam(abs(team->GetID() - 1))->GetLastTouchPlayer();
         if (lastTouchPlayer) {
+          DO_VALIDATION;
           reactionDifficulty =
               std::pow(lastTouchPlayer->GetLastTouchBias(
                            1200 - player->GetStat(physical_reaction) * 400),
@@ -513,6 +578,7 @@ void Humanoid::Process() {
         if ((1.0f - veloDifficulty) * (1.0f - reactionDifficulty) < 0.3f) canRetain = false; // too hard!
 
         if (canRetain) {
+          DO_VALIDATION;
           match->SetBallRetainer(CastPlayer());
         } else {
           Vector3 currentBallMovement = match->GetBall()->GetMovement().Get2D();
@@ -535,6 +601,7 @@ void Humanoid::Process() {
       }
 
       else if (currentAnim.functionType == e_FunctionType_Sliding) {
+        DO_VALIDATION;
         Vector3 touchVec = GetVectorFromString(currentAnim.anim->GetVariable("balldirection")).GetRotated2D(spatialState.angle);
         touchVec = touchVec * 6.0f + match->GetBall()->GetMovement() * -0.28f;
         touchVec += Vector3(0, 0, 6);
@@ -545,18 +612,23 @@ void Humanoid::Process() {
 
         team->SetLastTouchPlayer(CastPlayer(), e_TouchType_Accidental);
       }
-
     }
   }
 
   if (match->GetBallRetainer() == player) {
-    if ((currentAnim.touchFrame <= currentAnim.frameNum && currentAnim.anim->GetVariable("outgoing_retain_state") != "") ||
-        (currentAnim.touchFrame >  currentAnim.frameNum && currentAnim.anim->GetVariableCache().incoming_retain_state() != "") ||
-        (currentAnim.anim->GetVariable("incoming_retain_state") != "" && currentAnim.anim->GetVariable("outgoing_retain_state") != "")) {
+    DO_VALIDATION;
+    if ((currentAnim.touchFrame <= currentAnim.frameNum &&
+         currentAnim.anim->GetVariable("outgoing_retain_state") != "") ||
+        (currentAnim.touchFrame > currentAnim.frameNum &&
+         currentAnim.anim->GetVariableCache().incoming_retain_state() != "") ||
+        (currentAnim.anim->GetVariable("incoming_retain_state") != "" &&
+         currentAnim.anim->GetVariable("outgoing_retain_state") != "")) {
+      DO_VALIDATION;
       // find body part the ball is stuck to (superglue powers)
       auto outgoing = currentAnim.anim->GetVariable("outgoing_retain_state");
       auto bodyPart = outgoing.empty() ? nullptr : nodeMap[BodyPartFromString(outgoing)];
       if (!bodyPart) {
+        DO_VALIDATION;
         auto incoming = currentAnim.anim->GetVariable("incoming_retain_state");
         bodyPart = incoming.empty() ? nullptr : nodeMap[BodyPartFromString(incoming)];
       }
@@ -571,7 +643,6 @@ void Humanoid::Process() {
     }
   }
 
-
   // action smuggle
 
   // start with +1, because we want to influence the first frame as well
@@ -579,7 +650,9 @@ void Humanoid::Process() {
   // however, it works best to have all values 'done' at this one-to-last frame, so the next anim can read out these correct (new starting) values.
   float frameBias = (currentAnim.frameNum + 1) / (float)(currentAnim.anim->GetEffectiveFrameCount() + 1);
 
-  if (currentAnim.touchFrame != -1 && currentAnim.frameNum <= currentAnim.touchFrame) {
+  if (currentAnim.touchFrame != -1 &&
+      currentAnim.frameNum <= currentAnim.touchFrame) {
+    DO_VALIDATION;
     // linear version *outdated*
     // spatialState.actionSmuggleMovement = currentAnim.actionSmuggle / (float)(currentAnim.touchFrame - 1.0f);
     // currentAnim.actionSmuggleOffset += spatialState.actionSmuggleMovement;
@@ -600,10 +673,12 @@ void Humanoid::Process() {
     spatialState.actionSmuggleMovement = Vector3(0);
   }
 
-
   // movement smuggle
 
-  if (currentAnim.touchFrame == -1 && currentAnim.frameNum <= currentAnim.anim->GetEffectiveFrameCount()) { // omit one frame, or balltouch will be influenced because of velo
+  if (currentAnim.touchFrame == -1 &&
+      currentAnim.frameNum <= currentAnim.anim->GetEffectiveFrameCount()) {
+    DO_VALIDATION;  // omit one frame, or balltouch will be influenced because
+                    // of velo
     // linear version *outdated*
     // spatialState.movementSmuggleMovement = currentAnim.movementSmuggle / (float)(currentAnim.anim->GetEffectiveFrameCount());
     // currentAnim.movementSmuggleOffset += spatialState.movementSmuggleMovement;
@@ -623,7 +698,6 @@ void Humanoid::Process() {
     spatialState.movementSmuggleMovement = Vector3(0);
   }
 
-
   // rotation smuggle
 
   int beginRotationFrameCount = 16; // after this amount of frames, be ready with 'ease-in' rotation smuggle
@@ -631,10 +705,13 @@ void Humanoid::Process() {
   float beginFrameBias = cappedFrameBias;
   float endFrameBias = cappedFrameBias;
   if (currentAnim.touchFrame != -1) {
+    DO_VALIDATION;
     // beginFrameBias ranges from 0 to 1 during frame 0 to (touchframe OR beginRotationFrameCount) (depending on which comes first)
     beginFrameBias = std::min(1.0f, (currentAnim.frameNum + 1) / (float)std::min(beginRotationFrameCount, currentAnim.touchFrame + 1));
     if (!allowPreTouchRotationSmuggle) {
+      DO_VALIDATION;
       if (currentAnim.frameNum > currentAnim.touchFrame) {
+        DO_VALIDATION;
         // end rotation smuggle starts after touch
         endFrameBias = (currentAnim.frameNum - currentAnim.touchFrame) / (float)(currentAnim.anim->GetEffectiveFrameCount() - currentAnim.touchFrame);
       } else {
@@ -649,15 +726,21 @@ void Humanoid::Process() {
 
   // ballretainer should not get out of 16 meter box
 
-  if (match->GetBallRetainer() == player && CastPlayer()->GetFormationEntry().role == e_PlayerRole_GK && (match->IsInSetPiece() == false && match->IsInPlay() == true)) {
+  if (match->GetBallRetainer() == player &&
+      CastPlayer()->GetFormationEntry().role == e_PlayerRole_GK &&
+      (match->IsInSetPiece() == false && match->IsInPlay() == true)) {
+    DO_VALIDATION;
     if (match->GetBall()->Predict(0).coords[1] > 20.05f) {
+      DO_VALIDATION;
       OffsetPosition(Vector3(0, clamp(20.05f - match->GetBall()->Predict(0).coords[1], -0.5f, 0.5f), 0) * 0.3f);
     }
     if (match->GetBall()->Predict(0).coords[1] < -20.05f) {
+      DO_VALIDATION;
       OffsetPosition(Vector3(0, clamp(-20.05f - match->GetBall()->Predict(0).coords[1], -0.5f, 0.5f), 0) * 0.3f);
     }
     if (match->GetBall()->Predict(0).coords[0] * -team->GetDynamicSide() >
         -pitchHalfW + 16.4f) {
+      DO_VALIDATION;
       OffsetPosition(Vector3(clamp((-pitchHalfW + 16.4f) -
                                        match->GetBall()->Predict(0).coords[0] *
                                            -team->GetDynamicSide(),
@@ -667,6 +750,7 @@ void Humanoid::Process() {
     }
     if (match->GetBall()->Predict(0).coords[0] * -team->GetDynamicSide() <
         -pitchHalfW + 0.1f) {
+      DO_VALIDATION;
       OffsetPosition(Vector3(clamp((-pitchHalfW + 0.1f) -
                                        match->GetBall()->Predict(0).coords[0] *
                                            -team->GetDynamicSide(),
@@ -676,12 +760,12 @@ void Humanoid::Process() {
     }
   }
 
-
   // next frame
 
   animApplyBuffer.frameNum = currentAnim.frameNum;
 
   if (currentAnim.positions.size() > (unsigned int)currentAnim.frameNum) {
+    DO_VALIDATION;
     //printf("size: %i\n", currentAnim.positions.size());
     animApplyBuffer.position = startPos + currentAnim.positions.at(currentAnim.frameNum) + currentAnim.actionSmuggleOffset + currentAnim.actionSmuggleSustainOffset + currentAnim.movementSmuggleOffset;
     animApplyBuffer.orientation = startAngle + currentAnim.rotationSmuggleOffset;
@@ -695,6 +779,7 @@ void Humanoid::Process() {
 }
 
 void Humanoid::CalculateGeomOffsets() {
+  DO_VALIDATION;
   SetOffset(middle, 0.0, QUATERNION_IDENTITY);
   SetOffset(neck, 0.0, QUATERNION_IDENTITY);
   SetOffset(left_thigh, 0.0, QUATERNION_IDENTITY);
@@ -719,13 +804,15 @@ void Humanoid::CalculateGeomOffsets() {
   constexpr float adaptArmsToOpp_influence = 0.9f;
 
   if (match->IsInPlay() && match->GetBallRetainer() != player) {
+    DO_VALIDATION;
 
     if (currentAnim.functionType == e_FunctionType_Movement) {
-
+      DO_VALIDATION;
 
       // slow down legs when we're going slower than the anim (or speed up if we're going faster)
 
       if (adaptLegsToTrueVelocity) {
+        DO_VALIDATION;
         float actualVelo = spatialState.actualMovement.GetLength();
         float animVelo = spatialState.animMovement.GetLength();
         float veloFactor = (actualVelo + 0.2f) / (animVelo + 0.2f); // avoid div by zero
@@ -751,13 +838,12 @@ void Humanoid::CalculateGeomOffsets() {
         SetOffset(right_knee,  (1.0f - veloFactor) * adaptLegsToTrueVelocity_influence, defaultKneeOrientation);
         SetOffset(left_ankle,  (1.0f - veloFactor) * adaptLegsToTrueVelocity_influence, defaultAnkleOrientation);
         SetOffset(right_ankle, (1.0f - veloFactor) * adaptLegsToTrueVelocity_influence, defaultAnkleOrientation);
-
       }
-
 
       // aim a bit towards ball
 
       if (adaptBodyToBallPosition && !CastPlayer()->HasPossession()) {
+        DO_VALIDATION;
         Vector3 toBall = (match->GetMentalImage(mentalImageTime)->GetBallPrediction(10).Get2D() - spatialState.position).GetNormalized(spatialState.directionVec);
 
         radian angle = toBall.GetAngle2D(spatialState.relBodyDirectionVecNonquantized.GetRotated2D(spatialState.angle));//FixAngle(toBall.GetAngle2D() - spatialState.bodyAngle);
@@ -766,7 +852,8 @@ void Humanoid::CalculateGeomOffsets() {
         lookAtBallBias = clamp(lookAtBallBias * adaptBodyToBallPosition_influence, 0.0f, 1.0f);
         float ballDistance = match->GetBall()->Predict(100).Get2D().GetDistance(spatialState.position);
         float ballProximityFalloff = 1.6f;
-        if (ballDistance < ballProximityFalloff) { // close ball can be a problem
+        if (ballDistance < ballProximityFalloff) {
+          DO_VALIDATION;  // close ball can be a problem
           lookAtBallBias *= NormalizedClamp(ballDistance, ballProximityFalloff * 0.4f, ballProximityFalloff);
         }
         lookAtBallBias *=
@@ -788,12 +875,15 @@ void Humanoid::CalculateGeomOffsets() {
         SetOffset(neck, lookAtBallBias * 0.7f, headOrientation, true);
       }
 
-
       // use arms to keep opponents away
 
       if (adaptArmsToOpp) {
+        DO_VALIDATION;
         Player *opp = match->GetTeam(abs(team->GetID() - 1))->GetBestPossessionPlayer();
-        if ((opp->GetPosition() - spatialState.position).GetLength() < 1.4 && opp->GetDirectionVec().GetDotProduct(spatialState.directionVec) > 0.0) {
+        if ((opp->GetPosition() - spatialState.position).GetLength() < 1.4 &&
+            opp->GetDirectionVec().GetDotProduct(spatialState.directionVec) >
+                0.0) {
+          DO_VALIDATION;
 
           Vector3 baseRotVec = Vector3(0, -1, 0).GetRotated2D(spatialState.angle).GetRotated2D(spatialState.relBodyAngle);
           Vector3 oppVec = opp->GetPosition() - spatialState.position;
@@ -804,7 +894,9 @@ void Humanoid::CalculateGeomOffsets() {
 
           // player is behind us, somewhat to the left or right. hold up arm to keep him back
           if (fabs(angle) > 0.6 * pi && fabs(angle) < 0.85 * pi) {
+            DO_VALIDATION;
             if (angle > 0) {
+              DO_VALIDATION;
 
               shoulder.SetAngleAxis(0.4 * pi, Vector3(0, 1, 0));
               elbow.SetAngleAxis(0, Vector3(0, 1, 0));
@@ -812,12 +904,10 @@ void Humanoid::CalculateGeomOffsets() {
               SetOffset(right_elbow, 0.7f * adaptArmsToOpp_influence, elbow.GetNormalized());
 
             } else {
-
               shoulder.SetAngleAxis(-0.4 * pi, Vector3(0, 1, 0));
               elbow.SetAngleAxis(0, Vector3(0, 1, 0));
               SetOffset(left_shoulder, 0.8f * adaptArmsToOpp_influence, shoulder.GetNormalized());
               SetOffset(left_elbow, 0.7f * adaptArmsToOpp_influence, elbow.GetNormalized());
-
             }
 
             // bend forwards
@@ -828,14 +918,15 @@ void Humanoid::CalculateGeomOffsets() {
 
           // player is next to us, use arm to protect our position
           if (fabs(angle) > 0.2 * pi && fabs(angle) <= 0.6 * pi) {
+            DO_VALIDATION;
             if (angle > 0) {
+              DO_VALIDATION;
 
               shoulder.SetAngleAxis(0.4 * pi, Vector3(0, 1, 0));
               elbow.SetAngleAxis(-0.5 * pi, Vector3(1, 0, 0));
               SetOffset(right_shoulder, 0.7f * adaptArmsToOpp_influence, shoulder.GetNormalized());
               SetOffset(right_elbow, 0.8f * adaptArmsToOpp_influence, elbow.GetNormalized());
             } else {
-
               shoulder.SetAngleAxis(-0.4 * pi, Vector3(0, 1, 0));
               elbow.SetAngleAxis(-0.5 * pi, Vector3(1, 0, 0));
               SetOffset(left_shoulder, 0.7f * adaptArmsToOpp_influence, shoulder.GetNormalized());
@@ -845,7 +936,9 @@ void Humanoid::CalculateGeomOffsets() {
 
           // player is in front of us, pull shirt :p
           if (fabs(angle) < 0.2) {
+            DO_VALIDATION;
             if (angle > 0) {
+              DO_VALIDATION;
 
               shoulder.SetAngleAxis(-0.4 * pi, Vector3(1, 0, 0));
               elbow.SetAngleAxis(-0.2 * pi, Vector3(1, 0, 0));
@@ -853,23 +946,22 @@ void Humanoid::CalculateGeomOffsets() {
               SetOffset(right_elbow, 0.8f * adaptArmsToOpp_influence, elbow.GetNormalized());
 
             } else {
-
               shoulder.SetAngleAxis(-0.4 * pi, Vector3(1, 0, 0));
               elbow.SetAngleAxis(-0.2 * pi, Vector3(1, 0, 0));
               SetOffset(left_shoulder, 0.6f * adaptArmsToOpp_influence, shoulder.GetNormalized());
               SetOffset(left_elbow, 0.8f * adaptArmsToOpp_influence, elbow.GetNormalized());
-
             }
           }
         }
-
       }
 
     }
 
     else if (currentAnim.touchFrame != -1) {
+      DO_VALIDATION;
 
       if (adaptLegToTouchPos) {
+        DO_VALIDATION;
 
         // dynamic legs so we can reach the ball
 
@@ -880,7 +972,8 @@ void Humanoid::CalculateGeomOffsets() {
         if (bodypart.find("left_foot") != std::string::npos || bodypart.find("left_leg") != std::string::npos) leftOrRightLeg = -1;
         if (bodypart.find("right_foot") != std::string::npos || bodypart.find("right_leg") != std::string::npos) leftOrRightLeg = 1;
 
-        if (leftOrRightLeg != 0) { // wrong bodypart? don't do anything
+        if (leftOrRightLeg != 0) {
+          DO_VALIDATION;  // wrong bodypart? don't do anything
 
           int influenceFrames = 8;
           float frameFactor = curve(NormalizedClamp(influenceFrames - fabs(currentAnim.frameNum - (currentAnim.touchFrame - smoothFrames)), 0.0f, (float)influenceFrames), 0.5f);
@@ -940,8 +1033,8 @@ void Humanoid::CalculateGeomOffsets() {
 
 
 
-
           if (leftOrRightLeg == -1) {
+            DO_VALIDATION;
             SetOffset(left_thigh,  frameFactor * neededFactor * adaptLegToTouchPos_influence, defaultHipOrientation);
             SetOffset(left_knee,   frameFactor * neededFactor * adaptLegToTouchPos_influence, defaultKneeOrientation);
             SetOffset(left_ankle,  frameFactor * neededFactor * adaptLegToTouchPos_influence, defaultAnkleOrientation);
@@ -950,18 +1043,14 @@ void Humanoid::CalculateGeomOffsets() {
             SetOffset(right_knee,  frameFactor * neededFactor * adaptLegToTouchPos_influence, defaultKneeOrientation);
             SetOffset(right_ankle, frameFactor * neededFactor * adaptLegToTouchPos_influence, defaultAnkleOrientation);
           }
-
         }
-
       }
-
     }
-
   }
-
 }
 
 void Humanoid::SelectRetainAnim() {
+  DO_VALIDATION;
   CrudeSelectionQuery query;
   query.byFunctionType = true;
   query.functionType = e_FunctionType_Movement;
@@ -1005,11 +1094,15 @@ void Humanoid::SelectRetainAnim() {
 }
 
 void Humanoid::ResetSituation(const Vector3 &focusPos) {
+  DO_VALIDATION;
   HumanoidBase::ResetSituation(focusPos);
   //printf("humanoid reset\n");
 }
 
-bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInterruptAnim, bool preferPassAndShot) { // returns false on no applicable anim found
+bool Humanoid::SelectAnim(const PlayerCommand &command,
+                          e_InterruptAnim localInterruptAnim,
+                          bool preferPassAndShot) {
+  DO_VALIDATION;  // returns false on no applicable anim found
   assert(command.desiredDirection.coords[2] == 0.0f);
 
 
@@ -1019,13 +1112,26 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
       command.desiredFunctionType != e_FunctionType_Trip &&
       command.desiredFunctionType != e_FunctionType_Special &&
       command.desiredFunctionType != e_FunctionType_Sliding) {
-    if ((currentMentalImage->GetBallPrediction(200).Get2D() - spatialState.position).GetLength() > ballDistanceOptimizeThreshold) {
+    DO_VALIDATION;
+    if ((currentMentalImage->GetBallPrediction(200).Get2D() -
+         spatialState.position)
+            .GetLength() > ballDistanceOptimizeThreshold) {
+      DO_VALIDATION;
       return false;
     }
-    if ((currentMentalImage->GetBallPrediction(defaultTouchOffset_ms).Get2D() - spatialState.position).GetLength() > 2.0f &&
-    //    match->GetBall()->GetMovement().GetNormalized(0).GetDotProduct(player->GetMovement().GetNormalizedMax(1.0f)) < 0) { // ball and player going the other way
-        (currentMentalImage->GetBallPrediction(defaultTouchOffset_ms).Get2D() - (player->GetPosition() + player->GetMovement() * defaultTouchOffset_ms * 0.001)).GetLength() >
-        (currentMentalImage->GetBallPrediction(0).Get2D()                     - (player->GetPosition())).GetLength()) { // ball moving away from player
+    if ((currentMentalImage->GetBallPrediction(defaultTouchOffset_ms).Get2D() -
+         spatialState.position)
+                .GetLength() > 2.0f &&
+        //    match->GetBall()->GetMovement().GetNormalized(0).GetDotProduct(player->GetMovement().GetNormalizedMax(1.0f))
+        //    < 0) { DO_VALIDATION; // ball and player going the other way
+        (currentMentalImage->GetBallPrediction(defaultTouchOffset_ms).Get2D() -
+         (player->GetPosition() +
+          player->GetMovement() * defaultTouchOffset_ms * 0.001))
+                .GetLength() >
+            (currentMentalImage->GetBallPrediction(0).Get2D() -
+             (player->GetPosition()))
+                .GetLength()) {
+      DO_VALIDATION;  // ball moving away from player
       return false;
     }
   }
@@ -1035,14 +1141,16 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
       command.desiredFunctionType != e_FunctionType_Trip &&
       command.desiredFunctionType != e_FunctionType_Special &&
       command.desiredFunctionType != e_FunctionType_Sliding &&
-      command.desiredFunctionType != e_FunctionType_Deflect && match->GetBallRetainer() != player) {
+      command.desiredFunctionType != e_FunctionType_Deflect &&
+      match->GetBallRetainer() != player) {
+    DO_VALIDATION;
     if ((currentMentalImage->GetBallPrediction(1000) - match->GetBall()->Predict(1000)).GetLength() > 2.0f) return false;
   }
 
   // /optimizations
 
-
   if (localInterruptAnim == e_InterruptAnim_ReQueue) {
+    DO_VALIDATION;
 
     float focusDistance = (match->GetDesignatedPossessionPlayer()->GetPosition() - spatialState.position).GetLength();
 
@@ -1056,34 +1164,51 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
     if (currentAnim.functionType == e_FunctionType_Trap && command.desiredFunctionType == e_FunctionType_BallControl && (!allowTrapReQueue || currentAnim.frameNum + minRemainingTrapReQueueFrames > currentAnim.touchFrame || reQueueDelayFrames > 0)) return false;
 
     // too similar to what we are already trying to accomplish
-    if (currentAnim.originatingCommand.desiredFunctionType == command.desiredFunctionType &&
-        ((currentAnim.originatingCommand.desiredDirection * currentAnim.originatingCommand.desiredVelocityFloat) - (command.desiredDirection * command.desiredVelocityFloat)).GetLength() < 1.5f) {
+    if (currentAnim.originatingCommand.desiredFunctionType ==
+            command.desiredFunctionType &&
+        ((currentAnim.originatingCommand.desiredDirection *
+          currentAnim.originatingCommand.desiredVelocityFloat) -
+         (command.desiredDirection * command.desiredVelocityFloat))
+                .GetLength() < 1.5f) {
+      DO_VALIDATION;
       return false;
     }
 
     // requeue not needed?
-    if ((currentAnim.functionType == e_FunctionType_Movement && command.desiredFunctionType == e_FunctionType_Movement) ||
-        (currentAnim.functionType == e_FunctionType_BallControl && command.desiredFunctionType == e_FunctionType_BallControl) ||
-        (currentAnim.functionType == e_FunctionType_Trap && command.desiredFunctionType == e_FunctionType_BallControl) ||
-        (currentAnim.functionType == e_FunctionType_Trap && command.desiredFunctionType == e_FunctionType_Trap)) {
+    if ((currentAnim.functionType == e_FunctionType_Movement &&
+         command.desiredFunctionType == e_FunctionType_Movement) ||
+        (currentAnim.functionType == e_FunctionType_BallControl &&
+         command.desiredFunctionType == e_FunctionType_BallControl) ||
+        (currentAnim.functionType == e_FunctionType_Trap &&
+         command.desiredFunctionType == e_FunctionType_BallControl) ||
+        (currentAnim.functionType == e_FunctionType_Trap &&
+         command.desiredFunctionType == e_FunctionType_Trap)) {
+      DO_VALIDATION;
 
       // current change in momentum
       Vector3 plannedMomentumChange = currentAnim.outgoingMovement - currentAnim.incomingMovement;
       Vector3 desiredMomentumChange = (command.desiredDirection * command.desiredVelocityFloat) - spatialState.movement;
 
-      if ((desiredMomentumChange.GetDotProduct(plannedMomentumChange) > 0.0f && desiredMomentumChange.GetDistance(plannedMomentumChange) < 4.0f) ||
-          desiredMomentumChange.GetDotProduct(plannedMomentumChange) > 0.8f || desiredMomentumChange.GetDistance(plannedMomentumChange) < 2.0f) {
+      if ((desiredMomentumChange.GetDotProduct(plannedMomentumChange) > 0.0f &&
+           desiredMomentumChange.GetDistance(plannedMomentumChange) < 4.0f) ||
+          desiredMomentumChange.GetDotProduct(plannedMomentumChange) > 0.8f ||
+          desiredMomentumChange.GetDistance(plannedMomentumChange) < 2.0f) {
+        DO_VALIDATION;
         return false;
       }
-
     }
 
     // don't requeue movement to ballcontrol halfway movement anims, unless there's a serious change of movement desired
-    if ((currentAnim.functionType == e_FunctionType_Movement) && command.desiredFunctionType == e_FunctionType_BallControl && (match->GetActualTime_ms() - CastPlayer()->GetLastTouchTime_ms() < 600 && CastPlayer()->GetLastTouchType() == e_TouchType_Intentional_Kicked) && CastPlayer()->HasPossession()) {// && !CastPlayer()->AllowLastDitch()) {
+    if ((currentAnim.functionType == e_FunctionType_Movement) &&
+        command.desiredFunctionType == e_FunctionType_BallControl &&
+        (match->GetActualTime_ms() - CastPlayer()->GetLastTouchTime_ms() <
+             600 &&
+         CastPlayer()->GetLastTouchType() == e_TouchType_Intentional_Kicked) &&
+        CastPlayer()->HasPossession()) {
+      DO_VALIDATION;  // && !CastPlayer()->AllowLastDitch()) { DO_VALIDATION;
       float desiredMovementChange = (spatialState.movement - (command.desiredDirection * command.desiredVelocityFloat)).GetLength();
       if (desiredMovementChange < 1.0f) return false;
     }
-
   }
 
   if (localInterruptAnim != e_InterruptAnim_ReQueue || currentAnim.frameNum > 12) CalculateFactualSpatialState();
@@ -1108,6 +1233,7 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
   if (query.functionType == e_FunctionType_LongPass) query.functionType = e_FunctionType_ShortPass;
 
   if (command.touchInfo.desiredPower != 0.0f) {
+    DO_VALIDATION;
     query.byOutgoingBallDirection = true;
     query.outgoingBallDirection = command.touchInfo.desiredDirection.GetRotated2D(-spatialState.angle);
   }
@@ -1118,18 +1244,25 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
   if (query.functionType != e_FunctionType_Movement && query.incomingVelocity == e_Velocity_Dribble) query.incomingVelocity = e_Velocity_Walk;
 
   query.incomingVelocity_Strict = false;
-  if (query.functionType != e_FunctionType_Movement && query.functionType != e_FunctionType_BallControl) {
+  if (query.functionType != e_FunctionType_Movement &&
+      query.functionType != e_FunctionType_BallControl) {
+    DO_VALIDATION;
     query.incomingVelocity_ForceLinearity = false;
     if (query.functionType != e_FunctionType_Deflect) {
+      DO_VALIDATION;
       query.incomingVelocity_NoDribbleToSprint = true;
-      if (query.functionType != e_FunctionType_ShortPass && query.functionType != e_FunctionType_LongPass && query.functionType != e_FunctionType_HighPass && query.functionType != e_FunctionType_Shot) {
+      if (query.functionType != e_FunctionType_ShortPass &&
+          query.functionType != e_FunctionType_LongPass &&
+          query.functionType != e_FunctionType_HighPass &&
+          query.functionType != e_FunctionType_Shot) {
+        DO_VALIDATION;
         query.incomingVelocity_ForceLinearity = true;
         query.incomingVelocity_NoDribbleToIdle = true;
-      } else { // passes and such
+      } else {  // passes and such
         query.incomingVelocity_ForceLinearity = false;
         query.incomingVelocity_NoDribbleToIdle = false;
       }
-    } else { // deflect
+    } else {  // deflect
       query.incomingVelocity_NoDribbleToSprint = false;
       query.incomingVelocity_NoDribbleToIdle = false;
     }
@@ -1141,14 +1274,17 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
 
   query.incomingBodyDirection = spatialState.relBodyDirectionVec;
   if (query.functionType != e_FunctionType_Movement) {
+    DO_VALIDATION;
     query.incomingBodyDirection_Strict = false;
     if (query.functionType != e_FunctionType_Deflect) {
+      DO_VALIDATION;
       if (query.functionType != e_FunctionType_BallControl) {
+        DO_VALIDATION;
         query.incomingBodyDirection_ForceLinearity = true;
       } else {
         query.incomingBodyDirection_ForceLinearity = false; // new, we want to be able to use ballcontrol anims as trap more often to stop ball from rolling past us
       }
-    } else { // deflect
+    } else {  // deflect
       query.incomingBodyDirection_ForceLinearity = false;
     }
   } else {
@@ -1156,13 +1292,17 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
   }
 
   query.bySide = false;
-  if (command.useDesiredLookAt && currentAnim.anim->GetVariableCache().outgoing_special_state().empty() && match->GetBallRetainer() != CastPlayer()) {
+  if (command.useDesiredLookAt &&
+      currentAnim.anim->GetVariableCache().outgoing_special_state().empty() &&
+      match->GetBallRetainer() != CastPlayer()) {
+    DO_VALIDATION;
     Vector3 playerLookAtVec = (command.desiredLookAt - spatialState.position).GetNormalized(spatialState.directionVec);
     query.lookAtVecRel = playerLookAtVec.GetRotated2D(-spatialState.angle);
     query.bySide = true;
   }
 
   if (command.onlyDeflectAnimsThatPickupBall == true) {
+    DO_VALIDATION;
     query.byPickupBall = true;
     query.pickupBall = true;
   }
@@ -1170,17 +1310,20 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
   if (command.desiredFunctionType == e_FunctionType_Trap ||
       command.desiredFunctionType == e_FunctionType_Interfere ||
       command.desiredFunctionType == e_FunctionType_Deflect) {
+    DO_VALIDATION;
     query.byIncomingBallDirection = true;
     query.incomingBallDirection = (currentMentalImage->GetBallPrediction(180) - currentMentalImage->GetBallPrediction(120)).GetRotated2D(-spatialState.angle).GetNormalized(Vector3(0));
   }
 
   if (CastPlayer()->AllowLastDitch()) {
+    DO_VALIDATION;
     query.allowLastDitchAnims = true;
   } else {
     query.allowLastDitchAnims = false;
   }
 
   if (command.desiredFunctionType == e_FunctionType_Trip) {
+    DO_VALIDATION;
     query.byTripType = true;
     query.tripType = command.tripType;
   }
@@ -1195,14 +1338,18 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
   DataSet dataSet;
   anims->CrudeSelection(dataSet, query);
   if (dataSet.size() == 0) {
+    DO_VALIDATION;
     if (command.desiredFunctionType == e_FunctionType_Movement) {
+      DO_VALIDATION;
       dataSet.push_back(GetIdleMovementAnimID()); // do with idle anim (should not happen too often, only after weird bumps when there's for example a need for a sprint anim at an impossible body angle, after a trip of whatever)
-    } else return false;
+    } else
+      return false;
   }
 
   //printf("dataset size after crude selection: %i\n", dataSet.size());
 
   if (command.useDesiredMovement) {
+    DO_VALIDATION;
 
     Vector3 relDesiredDirection = command.desiredDirection.GetRotated2D(-spatialState.angle);
     float desiredAnimationVelocityFloat = command.desiredVelocityFloat;
@@ -1216,6 +1363,7 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
     SetBodyDirectionSimilarityPredicate(command.desiredLookAt);
 
     if (command.desiredFunctionType == e_FunctionType_Movement) {
+      DO_VALIDATION;
       // this makes body dirs lots better, at the cost of less correct movement anims. todo: maybe it's an idea to actually use this, and then allow more deviation in the physics code to fix the incorrect movement.
       //if (command.useDesiredLookAt) _KeepBestBodyDirectionAnims(dataSet, command, false, 0.5f * pi);
 
@@ -1225,8 +1373,10 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
     }
 
     else if (command.desiredFunctionType == e_FunctionType_BallControl) {
+      DO_VALIDATION;
       bool strict = true;
       if (CastPlayer()->AllowLastDitch()) {
+        DO_VALIDATION;
         strict = false;
       }
       float allowedBaseAngle = 0.0f * pi;
@@ -1236,16 +1386,17 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
     }
 
     else if (command.desiredFunctionType == e_FunctionType_Trap) {
+      DO_VALIDATION;
 
       /*
       bool haste = false;
-      // doesn't work well for long anims: they may be disregarded early on as panicky, yet then missed when we are starting to panic because they have a long 'fadein'
-      if (currentAnim.functionType != e_FunctionType_Trap) {
-        float hasteFactor = GetHasteFactor(false);
-        if (hasteFactor > 0.5f) hasteFactor = true;
-        std::string hasteString = hasteFactor ? "YES! PANIC!" : "nah relax bro";
+      // doesn't work well for long anims: they may be disregarded early on as
+      panicky, yet then missed when we are starting to panic because they have a
+      long 'fadein' if (currentAnim.functionType != e_FunctionType_Trap) {
+      DO_VALIDATION; float hasteFactor = GetHasteFactor(false); if (hasteFactor
+      > 0.5f) hasteFactor = true; std::string hasteString = hasteFactor ? "YES!
+      PANIC!" : "nah relax bro";
       }*/
-
 
       bool strict = true;
       if (CastPlayer()->AllowLastDitch(false) || _HighOrBouncyBall()) strict = false;
@@ -1257,6 +1408,7 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
 
       // when too unlike command's desired movement, just don't go for it (and hope for another ballcontrol/trap anim to save us later on)
       if (!_HighOrBouncyBall() && query.allowLastDitchAnims == false) {
+        DO_VALIDATION;
         assert(!dataSet.empty());
         Vector3 desiredMovement = command.desiredDirection * command.desiredVelocityFloat;
         Animation *bestWeGot = anims->GetAnim(*dataSet.begin());
@@ -1266,25 +1418,32 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
         bool allowAnim = true;
 
         radian angleDiff = fabs(bestWeGot->GetOutgoingDirection().GetRotated2D(spatialState.angle).GetAngle2D(command.desiredDirection));
-        if (angleDiff > 0.375f * pi) { // so we accept at least either 000 or 135 deg anims, which are two common anim types that are often available
+        if (angleDiff > 0.375f * pi) {
+          DO_VALIDATION;  // so we accept at least either 000 or 135 deg anims,
+                          // which are two common anim types that are often
+                          // available
           allowAnim = false;
         }
 
         Vector3 desiredBestDiff = bestWeGotMovement - desiredMovement;
-        if ( (desiredBestDiff.GetLength() > walkVelocity + 0.5f && currentDesiredDot > 0.0f) ||
-             (desiredBestDiff.GetLength() > sprintVelocity + 0.5f && currentDesiredDot <= 0.0f)    ) { // + margin
+        if ((desiredBestDiff.GetLength() > walkVelocity + 0.5f &&
+             currentDesiredDot > 0.0f) ||
+            (desiredBestDiff.GetLength() > sprintVelocity + 0.5f &&
+             currentDesiredDot <= 0.0f)) {
+          DO_VALIDATION;  // + margin
           allowAnim = false;
         }
 
         if (!allowAnim) {
+          DO_VALIDATION;
           return false;
         }
-
       }
 
     }
 
     else if (command.desiredFunctionType == e_FunctionType_Interfere) {
+      DO_VALIDATION;
 
       bool strict = false;
       float allowedAngle = 0.3f * pi;
@@ -1294,7 +1453,6 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
       _KeepBestDirectionAnims(dataSet, command, strict, allowedAngle, allowedVelocitySteps);
       if (command.useDesiredLookAt) _KeepBestBodyDirectionAnims(dataSet, command, strict, allowedAngle);
     }
-
   }
 
   std::stable_sort(dataSet.begin(), dataSet.end(), boost::bind(&Humanoid::ComparePriorityVariable, this, _1, _2));
@@ -1310,6 +1468,7 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
   std::stable_sort(dataSet.begin(), dataSet.end(), boost::bind(&Humanoid::CompareFootSimilarity, this, spatialState.foot, _1, _2));
 
   if (command.desiredFunctionType != e_FunctionType_BallControl) {
+    DO_VALIDATION;
     SetIncomingBodyDirectionSimilarityPredicate(spatialState.relBodyDirectionVec);
     std::stable_sort(dataSet.begin(), dataSet.end(), boost::bind(&Humanoid::CompareIncomingBodyDirectionSimilarity, this, _1, _2));
   }
@@ -1320,6 +1479,7 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
 
   // OLD METHOD
   if (command.useDesiredTripDirection) {
+    DO_VALIDATION;
     Vector3 relDesiredTripDirection = command.desiredTripDirection.GetRotated2D(-spatialState.angle);
     SetTripDirectionSimilarityPredicate(relDesiredTripDirection);
     std::stable_sort(dataSet.begin(), dataSet.end(), boost::bind(&Humanoid::CompareTripDirectionSimilarity, this, _1, _2));
@@ -1327,10 +1487,12 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
 
   // OLD METHOD
   if (command.desiredFunctionType != e_FunctionType_Movement) {
+    DO_VALIDATION;
     std::stable_sort(dataSet.begin(), dataSet.end(), boost::bind(&Humanoid::CompareBaseanimSimilarity, this, _1, _2));
   }
 
   if (command.desiredFunctionType == e_FunctionType_Deflect) {
+    DO_VALIDATION;
     std::stable_sort(dataSet.begin(), dataSet.end(), boost::bind(&Humanoid::CompareCatchOrDeflect, this, _1, _2));
   }
 
@@ -1343,7 +1505,9 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
   Vector3 actionSmuggle_tmp;
   radian rotationSmuggle_tmp = 0;
 
-  if (dataSet.size() == 0 && command.desiredFunctionType == e_FunctionType_Movement) {
+  if (dataSet.size() == 0 &&
+      command.desiredFunctionType == e_FunctionType_Movement) {
+    DO_VALIDATION;
     dataSet.push_back(GetIdleMovementAnimID()); // do with idle anim (should not happen too often, only after weird bumps when there's for example a need for a sprint anim at an impossible body angle, after a trip of whatever)
   }
 
@@ -1353,34 +1517,38 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
   if (command.desiredFunctionType == e_FunctionType_Movement ||
       command.desiredFunctionType == e_FunctionType_Trip ||
       command.desiredFunctionType == e_FunctionType_Special) {
+    DO_VALIDATION;
 
     selectedAnimID = *dataSet.begin();
     Animation *nextAnim = anims->GetAnim(selectedAnimID);
     Vector3 desiredMovement = command.desiredDirection * command.desiredVelocityFloat;
     assert(desiredMovement.coords[2] == 0.0f);
     Vector3 physicsVector = CalculatePhysicsVector(nextAnim, command.useDesiredMovement, desiredMovement, command.useDesiredLookAt, desiredBodyDirectionRel, positions_tmp, rotationSmuggle_tmp);
-  }
-  else if (command.desiredFunctionType == e_FunctionType_BallControl) {
+  } else if (command.desiredFunctionType == e_FunctionType_BallControl) {
+    DO_VALIDATION;
     if (NeedTouch(*dataSet.begin(), command)) {
+      DO_VALIDATION;
       selectedAnimID = GetBestCheatableAnimID(dataSet, command.useDesiredMovement, command.desiredDirection, command.desiredVelocityFloat, command.useDesiredLookAt, desiredBodyDirectionRel, positions_tmp, touchFrame_tmp, radiusOffset_tmp, touchPos_tmp, fullActionSmuggle_tmp, actionSmuggle_tmp, rotationSmuggle_tmp, localInterruptAnim, preferPassAndShot);
     }
-  }
-  else if (command.desiredFunctionType == e_FunctionType_Trap ||
-           command.desiredFunctionType == e_FunctionType_Interfere ||
-           command.desiredFunctionType == e_FunctionType_Deflect) {
+  } else if (command.desiredFunctionType == e_FunctionType_Trap ||
+             command.desiredFunctionType == e_FunctionType_Interfere ||
+             command.desiredFunctionType == e_FunctionType_Deflect) {
+    DO_VALIDATION;
     selectedAnimID = GetBestCheatableAnimID(dataSet, command.useDesiredMovement, command.desiredDirection, command.desiredVelocityFloat, command.useDesiredLookAt, desiredBodyDirectionRel, positions_tmp, touchFrame_tmp, radiusOffset_tmp, touchPos_tmp, fullActionSmuggle_tmp, actionSmuggle_tmp, rotationSmuggle_tmp, localInterruptAnim, preferPassAndShot);
-  }
-  else if (command.desiredFunctionType == e_FunctionType_ShortPass ||
-           command.desiredFunctionType == e_FunctionType_LongPass ||
-           command.desiredFunctionType == e_FunctionType_HighPass ||
-           command.desiredFunctionType == e_FunctionType_Shot) {
+  } else if (command.desiredFunctionType == e_FunctionType_ShortPass ||
+             command.desiredFunctionType == e_FunctionType_LongPass ||
+             command.desiredFunctionType == e_FunctionType_HighPass ||
+             command.desiredFunctionType == e_FunctionType_Shot) {
+    DO_VALIDATION;
 
     selectedAnimID = GetBestCheatableAnimID(dataSet, command.useDesiredMovement, command.desiredDirection, command.desiredVelocityFloat, command.useDesiredLookAt, desiredBodyDirectionRel, positions_tmp, touchFrame_tmp, radiusOffset_tmp, touchPos_tmp, fullActionSmuggle_tmp, actionSmuggle_tmp, rotationSmuggle_tmp, localInterruptAnim);
-  }
-  else if (command.desiredFunctionType == e_FunctionType_Sliding) {
+  } else if (command.desiredFunctionType == e_FunctionType_Sliding) {
+    DO_VALIDATION;
     selectedAnimID = GetBestCheatableAnimID(dataSet, command.useDesiredMovement, command.desiredDirection, command.desiredVelocityFloat, command.useDesiredLookAt, desiredBodyDirectionRel, positions_tmp, touchFrame_tmp, radiusOffset_tmp, touchPos_tmp, fullActionSmuggle_tmp, actionSmuggle_tmp, rotationSmuggle_tmp, localInterruptAnim);
     if (selectedAnimID == -1) {
+      DO_VALIDATION;
       if (dataSet.size() > 0) {
+        DO_VALIDATION;
         selectedAnimID = *dataSet.begin();
         Animation *nextAnim = anims->GetAnim(selectedAnimID);
         Vector3 desiredMovement = command.desiredDirection * command.desiredVelocityFloat;
@@ -1390,29 +1558,41 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
     }
   }
 
-
   // check if we really want to requeue; if the anim we dug up is actually better than the current
 
-  if (localInterruptAnim == e_InterruptAnim_ReQueue && selectedAnimID != -1 && currentAnim.positions.size() > 1 && positions_tmp.size() > 1) {
+  if (localInterruptAnim == e_InterruptAnim_ReQueue && selectedAnimID != -1 &&
+      currentAnim.positions.size() > 1 && positions_tmp.size() > 1) {
+    DO_VALIDATION;
 
     // don't requeue to same quadrant
     if (currentAnim.functionType == command.desiredFunctionType &&
 
-        ((FloatToEnumVelocity(currentAnim.anim->GetOutgoingVelocity()) != e_Velocity_Idle &&
-          currentAnim.anim->GetVariableCache().quadrant_id() == anims->GetAnim(selectedAnimID)->GetVariableCache().quadrant_id())
-          ||
-         ((FloatToEnumVelocity(currentAnim.anim->GetOutgoingVelocity()) == e_Velocity_Idle && FloatToEnumVelocity(anims->GetAnim(selectedAnimID)->GetOutgoingVelocity()) == e_Velocity_Idle) &&
-          fabs((ForceIntoPreferredDirectionAngle(currentAnim.anim->GetOutgoingAngle()) - ForceIntoPreferredDirectionAngle(anims->GetAnim(selectedAnimID)->GetOutgoingAngle()))) < 0.06f * pi))
-       ) {
+        ((FloatToEnumVelocity(currentAnim.anim->GetOutgoingVelocity()) !=
+              e_Velocity_Idle &&
+          currentAnim.anim->GetVariableCache().quadrant_id() ==
+              anims->GetAnim(selectedAnimID)
+                  ->GetVariableCache()
+                  .quadrant_id()) ||
+         ((FloatToEnumVelocity(currentAnim.anim->GetOutgoingVelocity()) ==
+               e_Velocity_Idle &&
+           FloatToEnumVelocity(
+               anims->GetAnim(selectedAnimID)->GetOutgoingVelocity()) ==
+               e_Velocity_Idle) &&
+          fabs((ForceIntoPreferredDirectionAngle(
+                    currentAnim.anim->GetOutgoingAngle()) -
+                ForceIntoPreferredDirectionAngle(
+                    anims->GetAnim(selectedAnimID)->GetOutgoingAngle()))) <
+              0.06f * pi))) {
+      DO_VALIDATION;
 
       selectedAnimID = -1;
     }
   }
 
-
   // make it so
 
   if (selectedAnimID != -1) {
+    DO_VALIDATION;
     previousAnim_frameNum = currentAnim.frameNum;
     previousAnim_functionType = currentAnim.functionType;
 
@@ -1447,6 +1627,7 @@ bool Humanoid::SelectAnim(const PlayerCommand &command, e_InterruptAnim localInt
 }
 
 bool Humanoid::NeedTouch(int animID, const PlayerCommand &command) {
+  DO_VALIDATION;
 
   // when idle (and desiredvelo is idle as well), don't want to touch the ball every frame
 
@@ -1473,6 +1654,7 @@ bool Humanoid::NeedTouch(int animID, const PlayerCommand &command) {
   if (velocityDeviation < -1.4 || velocityDeviation >= 0.7) return true;
 
   if (FloatToEnumVelocity(anim->GetOutgoingVelocity()) != e_Velocity_Idle) {
+    DO_VALIDATION;
     float angleDeviation = animMovement.GetNormalized(spatialState.directionVec).GetDotProduct(ballMovement.GetNormalized(spatialState.directionVec));
     if (angleDeviation < 0.975) return true;
   }
@@ -1526,11 +1708,11 @@ float Humanoid::GetBodyBallDistanceAdvantage(const Animation *anim, e_FunctionTy
 
   Vector3 outgoingDirection;
   if (FloatToEnumVelocity(outgoingMovement.GetLength()) == e_Velocity_Idle) {
+    DO_VALIDATION;
     outgoingDirection = Vector3(0, -1, 0).GetRotated2D(outgoingAngle);
   } else {
     outgoingDirection = outgoingMovement.GetNormalized();
   }
-
 
   Vector3 behindVectorUnscaled = -(incomingMovement * 0.1f + touchMovement * 0.2f + outgoingMovement * 0.7f);
   Vector3 behindVector =
@@ -1548,6 +1730,7 @@ float Humanoid::GetBodyBallDistanceAdvantage(const Animation *anim, e_FunctionTy
 
   bool deformArea = true;
   if (deformArea) {
+    DO_VALIDATION;
     Vector3 straightAngleVectorUnscaled = incomingMovement;
     Vector3 straightAngleVector = straightAngleVectorUnscaled.GetNormalized(outgoingDirection);
     radian toStraightAngle = Vector3(0, -1, 0).GetAngle2D(straightAngleVector);
@@ -1570,7 +1753,7 @@ float Humanoid::GetBodyBallDistanceAdvantage(const Animation *anim, e_FunctionTy
     /*
     // brick wall: if balls are beyond animtouchpos in outgoingDirection
     territory, cut off at higher speeds and such if (animToActualBall.coords[1]
-    < 0.0f) {
+    < 0.0f) { DO_VALIDATION;
       //float brickWallDistanceFactor = 1.0f -
     NormalizedClamp(averageInOutVelocity, 0.0f, sprintVelocity);
       //float brickWallDistance = radiusFactor * brickWallDistanceFactor * 2.0f;
@@ -1583,7 +1766,6 @@ float Humanoid::GetBodyBallDistanceAdvantage(const Animation *anim, e_FunctionTy
     animToActualBall.Rotate2D(-toStraightAngle);
   }
 
-
   // do some magic
 
   Vector3 adaptedActualBallPos2D = animBallPos2D + animToActualBall;
@@ -1594,6 +1776,7 @@ float Humanoid::GetBodyBallDistanceAdvantage(const Animation *anim, e_FunctionTy
   float result = 1.0f;
   float allowedRadius = (radius + effectiveRadiusCheatDistance) * cheatFactor + cheatDistanceBonus;
   if (adaptedActualBallPos2D.GetDistance(behindCenter) > allowedRadius) {
+    DO_VALIDATION;
     result = 0.0f;
   }
 
@@ -1627,6 +1810,7 @@ signed int Humanoid::GetBestCheatableAnimID(const DataSet &sortedDataSet, bool u
 
   bool found = false;
   while (iter != sortedDataSet.end() && found == false) {
+    DO_VALIDATION;
 
     Animation *anim = anims->GetAnim(*iter);
     bool isBase = anim->GetVariableCache().baseanim();
@@ -1665,25 +1849,30 @@ signed int Humanoid::GetBestCheatableAnimID(const DataSet &sortedDataSet, bool u
 
     // first the middle one down to the first
     for (int i = totalTouches / 2; i > -1; i--) {
+      DO_VALIDATION;
       touchIDs[count] = i;
       count++;
     }
     // then the 1-after-middle one and upwards
     for (int i = totalTouches / 2 + 1; i < totalTouches; i++) {
+      DO_VALIDATION;
       touchIDs[count] = i;
       count++;
     }
 
     while (touchNum < totalTouches && found == false) {
+      DO_VALIDATION;
 
       bool exists = footballExtension->GetTouch(touchIDs[touchNum], animBallPos, animTouchFrame);
       assert(exists);
 
       // out of bounds?
       if (match->GetBallRetainer() != player) {
+        DO_VALIDATION;
         Vector3 absBallPos = match->GetBall()->Predict(animTouchFrame * 10);
         if (fabs(absBallPos.coords[0]) > pitchHalfW + lineHalfW + 0.11f ||
             fabs(absBallPos.coords[1]) > pitchHalfH + lineHalfW + 0.11f) {
+          DO_VALIDATION;
           touchNum++;
           continue;
         }
@@ -1709,6 +1898,7 @@ signed int Humanoid::GetBestCheatableAnimID(const DataSet &sortedDataSet, bool u
 
       float animBallHeight = animBallPos.coords[2];
       if (allowPreTouchRotationSmuggle) {
+        DO_VALIDATION;
         animBallPos = (animBallPos - animBodyPos).GetRotated2D(rotationSmuggle_ret_tmp * ((float)animTouchFrame / (float)frameCount)) + positions_ret.at(animTouchFrame).GetRotated2D(-spatialState.angle);
       } else {
         animBallPos = (animBallPos - animBodyPos) + positions_ret.at(animTouchFrame).GetRotated2D(-spatialState.angle);
@@ -1718,6 +1908,7 @@ signed int Humanoid::GetBestCheatableAnimID(const DataSet &sortedDataSet, bool u
 
       // now pick the ballPos from the previous 9ms that is closest to animBallPos. this is to emulate a continuous 'close enough?'-check instead of a 'single moment' check.
       if (useContinuousBallCheck) {
+        DO_VALIDATION;
         Line ballLine(ballPos - ballMovement * 0.006f, ballPos + ballMovement * 0.003f);
         float u = clamp(ballLine.GetClosestToPoint(animBallPos), 0.0f, 1.0f);
         ballPos = ballLine.GetVertex(0) + (ballLine.GetVertex(1) - ballLine.GetVertex(0)) * u;
@@ -1742,6 +1933,7 @@ signed int Humanoid::GetBestCheatableAnimID(const DataSet &sortedDataSet, bool u
       if (ballPos.coords[2] < 0.5f && isBase) ballDistanceZ = std::max(ballDistanceZ - 0.15f, 0.0f); // low balls should be doable with ground level anims, doesn't look that bad :P
 
       if (ballDistanceZ < 0.22f) {
+        DO_VALIDATION;
 
         // default touch can be 'cheated' towards best, has biggest 'radius'
         float touchFrameAwkwardness = NormalizedClamp(abs(defaultTouchFrame - animTouchFrame), 0.0f, 4.0f);
@@ -1766,17 +1958,48 @@ signed int Humanoid::GetBestCheatableAnimID(const DataSet &sortedDataSet, bool u
         float radiusCheatOffset = 0.0f;
         float radiusFactor = 0.3f * (1.0f - touchFrameAwkwardness);
 
-        if (functionType == e_FunctionType_Deflect) { radiusFactor *= 1.8f; radiusCheatOffset += 0.4f; }
+        if (functionType == e_FunctionType_Deflect) {
+          DO_VALIDATION;
+          radiusFactor *= 1.8f;
+          radiusCheatOffset += 0.4f;
+        }
 
-        if (functionType == e_FunctionType_Sliding) { radiusFactor *= 0.2f; radiusCheatOffset = 0.0f; } // prefer sliding without ball touch
-        if (functionType == e_FunctionType_Interfere) { radiusFactor *= 1.4f; radiusCheatOffset += 0.2f; }
+        if (functionType == e_FunctionType_Sliding) {
+          DO_VALIDATION;
+          radiusFactor *= 0.2f;
+          radiusCheatOffset = 0.0f;
+        }  // prefer sliding without ball touch
+        if (functionType == e_FunctionType_Interfere) {
+          DO_VALIDATION;
+          radiusFactor *= 1.4f;
+          radiusCheatOffset += 0.2f;
+        }
 
-        if (functionType == e_FunctionType_ShortPass) { radiusFactor *= 1.3f; radiusCheatOffset += 0.15f; }
-        if (functionType == e_FunctionType_LongPass) { radiusFactor *= 1.3f; radiusCheatOffset += 0.15f; }
-        if (functionType == e_FunctionType_HighPass) { radiusFactor *= 1.3f; radiusCheatOffset += 0.15f; }
-        if (functionType == e_FunctionType_Shot) { radiusFactor *= 1.3f; radiusCheatOffset += 0.15f; }
+        if (functionType == e_FunctionType_ShortPass) {
+          DO_VALIDATION;
+          radiusFactor *= 1.3f;
+          radiusCheatOffset += 0.15f;
+        }
+        if (functionType == e_FunctionType_LongPass) {
+          DO_VALIDATION;
+          radiusFactor *= 1.3f;
+          radiusCheatOffset += 0.15f;
+        }
+        if (functionType == e_FunctionType_HighPass) {
+          DO_VALIDATION;
+          radiusFactor *= 1.3f;
+          radiusCheatOffset += 0.15f;
+        }
+        if (functionType == e_FunctionType_Shot) {
+          DO_VALIDATION;
+          radiusFactor *= 1.3f;
+          radiusCheatOffset += 0.15f;
+        }
 
-        if ((functionType == e_FunctionType_Trap || functionType == e_FunctionType_BallControl) && preferPassAndShot == true) {
+        if ((functionType == e_FunctionType_Trap ||
+             functionType == e_FunctionType_BallControl) &&
+            preferPassAndShot == true) {
+          DO_VALIDATION;
           radiusFactor *= 0.3f;
         }
 
@@ -1786,6 +2009,7 @@ signed int Humanoid::GetBestCheatableAnimID(const DataSet &sortedDataSet, bool u
 
         Vector3 FFO = GetFrontOfFootOffsetRel(touchVelo, z, ballPos.coords[2]);
         if (FloatToEnumVelocity(touchVelo) == e_Velocity_Idle) {
+          DO_VALIDATION;
           //FFO.Rotate2D(z); // always towards y = -1, right? (hmmm not really)
         } else {
           FFO.Rotate2D(FixAngle(touchMovement.GetNormalized(Vector3(0, -1, 0)).GetAngle2D()));
@@ -1793,18 +2017,20 @@ signed int Humanoid::GetBestCheatableAnimID(const DataSet &sortedDataSet, bool u
         // just touched ball
         float lastTouchBias = curve(player->GetLastTouchBias(600, match->GetActualTime_ms() + animTouchFrame * 10), 1.0f);
         if (lastTouchBias > 0.0f) {
+          DO_VALIDATION;
           float factor = 1.0f - lastTouchBias * 0.97f * (1.0f - player->GetStat(technical_ballcontrol) * 0.1f);
           radiusFactor *= factor;
           radiusCheatOffset *= factor;
         }
-
 
         bool debug = false;
 
         float touchFramedRadiusFactor = radiusFactor * touchFrameFactor;
         float bodyBallDistanceAdvantage = GetBodyBallDistanceAdvantage(anim, functionType, animTouchMovement, touchMovement, incomingMovement, adaptedOutgoingMovement, predictedAngle, bodyPos, FFO, animBallPos.Get2D(), ballPos.Get2D(), ballMovement.Get2D(), touchFramedRadiusFactor, radiusCheatOffset, 1.0f, debug);
 
-        if (bodyBallDistanceAdvantage >= 1.0f || match->GetBallRetainer() == player) {
+        if (bodyBallDistanceAdvantage >= 1.0f ||
+            match->GetBallRetainer() == player) {
+          DO_VALIDATION;
           found = true;
 
           bestAnimID = (signed int)*iter;
@@ -1813,7 +2039,6 @@ signed int Humanoid::GetBestCheatableAnimID(const DataSet &sortedDataSet, bool u
           animTouchFrame_ret = animTouchFrame;
           radiusOffset_ret = 1000.0f;//radiusOffset; todo? is this still in use?
         }
-
       }
       touchNum++;
     }
@@ -1821,6 +2046,7 @@ signed int Humanoid::GetBestCheatableAnimID(const DataSet &sortedDataSet, bool u
   }
 
   if (found) {
+    DO_VALIDATION;
     auto currentMentalImage = match->GetMentalImage(mentalImageTime);
     touchPos_ret = currentMentalImage->GetBallPrediction(animTouchFrame_ret * 10);
 
@@ -1828,10 +2054,12 @@ signed int Humanoid::GetBestCheatableAnimID(const DataSet &sortedDataSet, bool u
     actionSmuggle_ret = fullActionSmuggle_ret;
 
     if (forceFullActionSmuggleDiscard) {
+      DO_VALIDATION;
 
       actionSmuggle_ret = 0;
 
     } else if (enableActionSmuggleDiscard) {
+      DO_VALIDATION;
 
       // cheat discard distance (don't show some amount of cheat, like, a cheat-cheat :D CHEATCEPTION)
       float smuggleDistance = actionSmuggle_ret.GetLength();
@@ -1871,11 +2099,13 @@ signed int Humanoid::GetBestCheatableAnimID(const DataSet &sortedDataSet, bool u
       // lose forward-facing part of smuggle
 
       if (discardForwardSmuggle || discardSidewaysSmuggle) {
+        DO_VALIDATION;
 
         radian toStraightAngle = spatialState.angle + predictedAngle;
         actionSmuggle_ret.Rotate2D(-toStraightAngle);
 
         if (discardForwardSmuggle) {
+          DO_VALIDATION;
           float shortenForwardDistance = 0.02f;
           float allowForwardDistance =
               0.25f *
@@ -1888,11 +2118,11 @@ signed int Humanoid::GetBestCheatableAnimID(const DataSet &sortedDataSet, bool u
           if (actionSmuggle_ret.coords[1] < 0.0f) actionSmuggle_ret.coords[1] = clamp(actionSmuggle_ret.coords[1] + shortenForwardDistance, -allowForwardDistance, 0.0f);
         }
         if (discardSidewaysSmuggle) {
+          DO_VALIDATION;
           actionSmuggle_ret.coords[0] *= 0.7f;
         }
 
         actionSmuggle_ret.Rotate2D(toStraightAngle);
-
       }
 
       // less chaos in micro battles
@@ -1907,8 +2137,9 @@ signed int Humanoid::GetBestCheatableAnimID(const DataSet &sortedDataSet, bool u
   return bestAnimID;
 }
 
-
-Vector3 Humanoid::CalculateMovementSmuggle(const Vector3 &desiredDirection, float desiredVelocityFloat) {
+Vector3 Humanoid::CalculateMovementSmuggle(const Vector3 &desiredDirection,
+                                           float desiredVelocityFloat) {
+  DO_VALIDATION;
 
   if (!enableMovementSmuggle) return Vector3(0);
 
@@ -1924,6 +2155,7 @@ Vector3 Humanoid::CalculateMovementSmuggle(const Vector3 &desiredDirection, floa
 
   unsigned int timeToBall_ms = CastPlayer()->GetTimeNeededToGetToBall_ms();
   if (CastPlayer()->GetDesiredTimeToBall_ms() > (signed int)timeToBall_ms) {
+    DO_VALIDATION;
     timeToBall_ms = CastPlayer()->GetDesiredTimeToBall_ms();
   }
   unsigned int animTime_ms = currentAnim.anim->GetFrameCount() * 10;
@@ -1939,8 +2171,8 @@ Vector3 Humanoid::CalculateMovementSmuggle(const Vector3 &desiredDirection, floa
   Vector3 ffo = GetFrontOfFootOffsetRel(predictedOutgoingMovement.GetLength(), currentAnim.anim->GetOutgoingBodyAngle(), ballHeight).GetRotated2D(predictedAngle);
   Vector3 desiredBallPos = predictedPos + ffo;
 
-
   if (!CastPlayer()->HasPossession()) {
+    DO_VALIDATION;
 
     // macro effect: consider a line going in the ball movement direction. consider the spot we want the ball at (in front of us) after this movement anim.
     // now calculate the shortest line between that line and that point. now move over that line from the point towards the line somewhat
@@ -1956,12 +2188,10 @@ Vector3 Humanoid::CalculateMovementSmuggle(const Vector3 &desiredDirection, floa
 
     toDesired = closestBallPos - desiredBallPos;
 
-  } else { // if HasPossession
+  } else {  // if HasPossession
 
     toDesired = ballPos.Get2D() - desiredBallPos;
-
   }
-
 
   unsigned int maxEffectTimeTreshold_ms = 250 + defaultTouchOffset_ms; // if the ball is this much longer 'farther away' than feasible, rather postpone effect until next anim (else we may overrun)
   if (FloatToEnumVelocity(currentAnim.anim->GetOutgoingVelocity()) == e_Velocity_Idle) maxEffectTimeTreshold_ms = 2000; // no danger of overrunning
@@ -1985,7 +2215,9 @@ Vector3 Humanoid::CalculateMovementSmuggle(const Vector3 &desiredDirection, floa
   return toDesired;
 }
 
-Vector3 Humanoid::GetBestPossibleTouch(const Vector3 &desiredTouch, e_FunctionType functionType) {
+Vector3 Humanoid::GetBestPossibleTouch(const Vector3 &desiredTouch,
+                                       e_FunctionType functionType) {
+  DO_VALIDATION;
   constexpr float maxPowerShortPass = 30.0f;
   constexpr float maxPowerHighPass  = 42.0f;
   float maxPowerBase = maxPowerShortPass;
@@ -2005,11 +2237,11 @@ Vector3 Humanoid::GetBestPossibleTouch(const Vector3 &desiredTouch, e_FunctionTy
   float maxPower = maxPowerBase * maxPowerFactor * (1.0f - clamp(decayingPositionOffset.GetLength() * 2.5f, 0.0f, 0.25f));
   maxPower += match->GetBall()->GetMovement().GetLength() * 0.5f; // can use some of current ballmomentum
   if (resultTouch.GetLength() > maxPower) {
+    DO_VALIDATION;
     float missingPower = resultTouch.GetLength() - maxPower;
     resultTouch = resultTouch.GetNormalized(0) * maxPower;
     resultTouch.coords[2] += clamp(missingPower, 0.0f, 10.0f) * 0.25f;
   }
-
 
   // difficulty
 
@@ -2030,6 +2262,7 @@ Vector3 Humanoid::GetBestPossibleTouch(const Vector3 &desiredTouch, e_FunctionTy
   randomRotation = distanceFactor * 0.15f + heightFactor * 0.15f + ballMovementFactor * 0.3f + difficultyFactor * 0.5f;
   Vector3 animBallDirection = GetVectorFromString(currentAnim.anim->GetVariable("balldirection")).GetRotated2D(startAngle + currentAnim.rotationSmuggleOffset);
   if (animBallDirection.GetLength() > 0.01f) {
+    DO_VALIDATION;
     float bias = clamp(randomRotation * 1.5f, 0.0f, 1.0f);
     Vector3 nativeTouch = animBallDirection.GetNormalized(resultTouch).Get2D() * resultTouch.GetLength() + resultTouch * Vector3(0, 0, 1);
     resultTouch = resultTouch * (1.0f - bias) + nativeTouch * bias;

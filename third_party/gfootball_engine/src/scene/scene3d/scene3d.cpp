@@ -21,60 +21,68 @@
 
 namespace blunted {
 
-  Scene3D::Scene3D() {
-    boost::intrusive_ptr<Node> root(new Node("Scene3D root node"));
-    hierarchyRoot = root;
+Scene3D::Scene3D() {
+  DO_VALIDATION;
+  boost::intrusive_ptr<Node> root(new Node("Scene3D root node"));
+  hierarchyRoot = root;
 
-    supportedObjectTypes.push_back(e_ObjectType_Geometry);
-    supportedObjectTypes.push_back(e_ObjectType_Skybox);
-    supportedObjectTypes.push_back(e_ObjectType_Camera);
-    supportedObjectTypes.push_back(e_ObjectType_Light);
+  supportedObjectTypes.push_back(e_ObjectType_Geometry);
+  supportedObjectTypes.push_back(e_ObjectType_Skybox);
+  supportedObjectTypes.push_back(e_ObjectType_Camera);
+  supportedObjectTypes.push_back(e_ObjectType_Light);
+}
+
+Scene3D::~Scene3D() { DO_VALIDATION; }
+
+void Scene3D::Init() {
+  DO_VALIDATION;
+
+  int observersSize = observers.size();
+  for (int i = 0; i < observersSize; i++) {
+    DO_VALIDATION;
+    IScene3DInterpreter *scene3DInterpreter =
+        static_cast<IScene3DInterpreter *>(observers[i].get());
+    scene3DInterpreter->OnLoad();
+  }
+}
+
+void Scene3D::Exit() {
+  DO_VALIDATION;  // ATOMIC
+  hierarchyRoot->Exit();
+  hierarchyRoot.reset();
+
+  int observersSize = observers.size();
+  for (int i = 0; i < observersSize; i++) {
+    DO_VALIDATION;
+    IScene3DInterpreter *scene3DInterpreter =
+        static_cast<IScene3DInterpreter *>(observers[i].get());
+    scene3DInterpreter->OnUnload();
   }
 
-  Scene3D::~Scene3D() {
+  Scene::Exit();
+}
+
+void Scene3D::AddNode(boost::intrusive_ptr<Node> node) {
+  DO_VALIDATION;
+  hierarchyRoot->AddNode(node);
+}
+
+void Scene3D::DeleteNode(boost::intrusive_ptr<Node> node) {
+  DO_VALIDATION;
+  hierarchyRoot->DeleteNode(node);
+}
+
+void Scene3D::PokeObjects(e_ObjectType targetObjectType,
+                          e_SystemType targetSystemType) {
+  DO_VALIDATION;
+  if (!SupportedObjectType(targetObjectType)) {
+    DO_VALIDATION;
+    Log(e_Error, "Scene3D", "PokeObjects",
+        "targetObjectType " + int_to_str(targetObjectType) +
+            " is not supported by this scene");
+    return;
   }
 
-  void Scene3D::Init() {
-
-    int observersSize = observers.size();
-    for (int i = 0; i < observersSize; i++) {
-      IScene3DInterpreter *scene3DInterpreter = static_cast<IScene3DInterpreter*>(observers[i].get());
-      scene3DInterpreter->OnLoad();
-    }
-
-  }
-
-  void Scene3D::Exit() { // ATOMIC
-    hierarchyRoot->Exit();
-    hierarchyRoot.reset();
-
-
-    int observersSize = observers.size();
-    for (int i = 0; i < observersSize; i++) {
-      IScene3DInterpreter *scene3DInterpreter = static_cast<IScene3DInterpreter*>(observers[i].get());
-      scene3DInterpreter->OnUnload();
-    }
-
-    Scene::Exit();
-
-  }
-
-
-  void Scene3D::AddNode(boost::intrusive_ptr<Node> node) {
-    hierarchyRoot->AddNode(node);
-  }
-
-  void Scene3D::DeleteNode(boost::intrusive_ptr<Node> node) {
-    hierarchyRoot->DeleteNode(node);
-  }
-
-  void Scene3D::PokeObjects(e_ObjectType targetObjectType, e_SystemType targetSystemType) {
-    if (!SupportedObjectType(targetObjectType)) {
-      Log(e_Error, "Scene3D", "PokeObjects", "targetObjectType " + int_to_str(targetObjectType) + " is not supported by this scene");
-      return;
-    }
-
-    hierarchyRoot->PokeObjects(targetObjectType, targetSystemType);
-  }
-
+  hierarchyRoot->PokeObjects(targetObjectType, targetSystemType);
+}
 }

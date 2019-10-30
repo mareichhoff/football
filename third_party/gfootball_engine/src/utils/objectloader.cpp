@@ -27,18 +27,17 @@
 
 namespace blunted {
 
-  ObjectLoader::ObjectLoader() {
-  }
+ObjectLoader::ObjectLoader() { DO_VALIDATION; }
 
-  ObjectLoader::~ObjectLoader() {
-  }
+ObjectLoader::~ObjectLoader() { DO_VALIDATION; }
 
-  boost::intrusive_ptr<Node> ObjectLoader::LoadObject(const std::string &filename, const Vector3 &offset) const {
-
-    XMLLoader loader;
-    const XMLTree objectTree = loader.LoadFile(filename);
-    boost::intrusive_ptr<Node> result = LoadObjectImpl(filename, objectTree.children.begin()->second, offset);
-    return result;
+boost::intrusive_ptr<Node> ObjectLoader::LoadObject(
+    const std::string &filename, const Vector3 &offset) const {
+  XMLLoader loader;
+  const XMLTree objectTree = loader.LoadFile(filename);
+  boost::intrusive_ptr<Node> result =
+      LoadObjectImpl(filename, objectTree.children.begin()->second, offset);
+  return result;
   }
 
   boost::intrusive_ptr<Node> ObjectLoader::LoadObjectImpl(const std::string &nodename, const XMLTree &objectTree, const Vector3 &offset) const {
@@ -52,6 +51,7 @@ namespace blunted {
 
     map_XMLTree::const_iterator objectIter = objectTree.children.begin();
     while (objectIter != objectTree.children.end()) {
+      DO_VALIDATION;
       std::string objectName;
       Properties properties;
       e_LocalMode localMode = e_LocalMode_Relative;
@@ -62,29 +62,33 @@ namespace blunted {
       // NODE (recurse)
 
       if (objectIter->first == "node") {
+        DO_VALIDATION;
         objNode->AddNode(LoadObjectImpl(dirpart, objectIter->second, offset));
       }
 
       else if (objectIter->first == "name") {
+        DO_VALIDATION;
         objectName = objectIter->second.value;
         //printf("node name: %s\n", objectIter->second.value.c_str());
         objNode->SetName(objectName);
       }
 
       else if (objectIter->first == "position") {
+        DO_VALIDATION;
         position = GetVectorFromString(objectIter->second.value) + offset;
         objNode->SetPosition(position);
       }
 
       else if (objectIter->first == "rotation") {
+        DO_VALIDATION;
         rotation = GetQuaternionFromString(objectIter->second.value);
         objNode->SetRotation(rotation);
       }
 
-
       // GEOMETRY
 
       else if (objectIter->first == "geometry") {
+        DO_VALIDATION;
         std::string aseFilename;
         Vector3 position;
         Quaternion rotation;
@@ -93,25 +97,32 @@ namespace blunted {
 
         map_XMLTree::const_iterator iter = objectIter->second.children.begin();
         while (iter != objectIter->second.children.end()) {
+          DO_VALIDATION;
 
           if (iter->first == "filename") {
+            DO_VALIDATION;
             aseFilename = iter->second.value;
             //printf("geom file: %s\n", aseFilename.c_str());
           }
           if (iter->first == "name") {
+            DO_VALIDATION;
             objectName = iter->second.value;
             //printf("geom name: %s\n", objectName.c_str());
           }
           if (iter->first == "position") {
+            DO_VALIDATION;
             position = GetVectorFromString(iter->second.value) + offset;
           }
           if (iter->first == "rotation") {
+            DO_VALIDATION;
             rotation = GetQuaternionFromString(iter->second.value);
           }
           if (iter->first == "properties") {
+            DO_VALIDATION;
             InterpretProperties(iter->second.children, properties);
           }
           if (iter->first == "localmode") {
+            DO_VALIDATION;
             localMode = InterpretLocalMode(iter->second.value);
           }
 
@@ -131,25 +142,30 @@ namespace blunted {
         objNode->AddObject(object);
       }
 
-
       // LIGHT
 
       else if (objectIter->first == "light") {
+        DO_VALIDATION;
         Vector3 position;
 
         map_XMLTree::const_iterator iter = objectIter->second.children.begin();
         while (iter != objectIter->second.children.end()) {
+          DO_VALIDATION;
 
           if (iter->first == "name") {
+            DO_VALIDATION;
             objectName = iter->second.value;
           }
           if (iter->first == "position") {
+            DO_VALIDATION;
             position = GetVectorFromString(iter->second.value);
           }
           if (iter->first == "properties") {
+            DO_VALIDATION;
             InterpretProperties(iter->second.children, properties);
           }
           if (iter->first == "localmode") {
+            DO_VALIDATION;
             localMode = InterpretLocalMode(iter->second.value);
             //if (localMode == e_localMode_
           }
@@ -165,6 +181,7 @@ namespace blunted {
         object->SetColor(GetVectorFromString(properties.Get("color")));
         object->SetRadius(properties.GetReal("radius"));
         if (properties.Get("type") == "directional") {
+          DO_VALIDATION;
           object->SetType(e_LightType_Directional);
         } else {
           object->SetType(e_LightType_Point);
@@ -182,6 +199,7 @@ namespace blunted {
   void ObjectLoader::InterpretProperties(const map_XMLTree &tree, Properties &properties) const {
     map_XMLTree::const_iterator propIter = tree.begin();
     while (propIter != tree.end()) {
+      DO_VALIDATION;
       properties.Set(propIter->first.c_str(), propIter->second.value);
       //printf("%s %s\n", propIter->first.c_str(), propIter->second.value.c_str());
       propIter++;
@@ -190,6 +208,7 @@ namespace blunted {
 
   e_LocalMode ObjectLoader::InterpretLocalMode(const std::string &value) const {
     if (value.compare("absolute") == 0) {
+      DO_VALIDATION;
       return e_LocalMode_Absolute;
     } else {
       return e_LocalMode_Relative;

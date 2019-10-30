@@ -32,15 +32,15 @@ class Officials {
     void Mirror();
 
     void GetPlayers(std::vector<PlayerBase*> &players);
-    PlayerOfficial *GetReferee() { return referee; }
+    PlayerOfficial *GetReferee() { DO_VALIDATION; return referee; }
 
     virtual void Process();
     virtual void PreparePutBuffers();
     virtual void FetchPutBuffers();
     virtual void Put();
 
-    boost::intrusive_ptr<Geometry> GetYellowCardGeom() { return yellowCard; }
-    boost::intrusive_ptr<Geometry> GetRedCardGeom() { return redCard; }
+    boost::intrusive_ptr<Geometry> GetYellowCardGeom() { DO_VALIDATION; return yellowCard; }
+    boost::intrusive_ptr<Geometry> GetRedCardGeom() { DO_VALIDATION; return redCard; }
     void ProcessState(EnvState* state);
 
   protected:

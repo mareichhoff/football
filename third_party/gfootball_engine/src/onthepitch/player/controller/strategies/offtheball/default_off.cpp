@@ -21,7 +21,10 @@
 
 #include "../../../../../main.hpp"
 
-void DefaultOffenseStrategy::RequestInput(ElizaController *controller, const MentalImage *mentalImage, Vector3 &direction, float &velocity) {
+void DefaultOffenseStrategy::RequestInput(ElizaController *controller,
+                                          const MentalImage *mentalImage,
+                                          Vector3 &direction, float &velocity) {
+  DO_VALIDATION;
 
   bool offensiveComponents = true;
   bool defensiveComponents = true;
@@ -34,11 +37,17 @@ void DefaultOffenseStrategy::RequestInput(ElizaController *controller, const Men
   Vector3 desiredPosition = desiredPosition_static * staticPositionBias + desiredPosition_dynamic * (1.0f - staticPositionBias);
 
   if (offensiveComponents) {
+    DO_VALIDATION;
     // support position
     float attackBias = NormalizedClamp((controller->GetFadingTeamPossessionAmount() - 0.5f) * 1.0f, 0.1f, 0.6f);
     bool makeRun = false;
     if (attackBias > 0.7f) {
-      if (controller->GetTeam()->GetController()->GetEndApplyAttackingRun_ms() > controller->GetMatch()->GetActualTime_ms() && controller->GetTeam()->GetController()->GetAttackingRunPlayer() == controller->GetPlayer()) {
+      DO_VALIDATION;
+      if (controller->GetTeam()->GetController()->GetEndApplyAttackingRun_ms() >
+              controller->GetMatch()->GetActualTime_ms() &&
+          controller->GetTeam()->GetController()->GetAttackingRunPlayer() ==
+              controller->GetPlayer()) {
+        DO_VALIDATION;
         makeRun = true;
       }
     }
@@ -47,6 +56,7 @@ void DefaultOffenseStrategy::RequestInput(ElizaController *controller, const Men
   }
 
   if (defensiveComponents) {
+    DO_VALIDATION;
     float mindset = AI_GetMindSet(static_cast<Player*>(controller->GetPlayer())->GetDynamicFormationEntry().role);
     controller->AddDefensiveComponent(
         desiredPosition,

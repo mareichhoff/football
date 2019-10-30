@@ -30,7 +30,7 @@ using namespace blunted;
 class Match;
 
 struct BallSpatialInfo {
-  BallSpatialInfo(const Vector3 &momentum, const Quaternion &rotation_ms) {
+  BallSpatialInfo(const Vector3 &momentum, const Quaternion &rotation_ms) { DO_VALIDATION;
     this->momentum = momentum;
     this->rotation_ms = rotation_ms;
   }
@@ -45,7 +45,7 @@ class Ball {
     virtual ~Ball();
 
     void Mirror();
-    boost::intrusive_ptr<Geometry> GetBallGeom() { return ball; }
+    boost::intrusive_ptr<Geometry> GetBallGeom() { DO_VALIDATION; return ball; }
 
     inline Vector3 Predict(int predictTime_ms) const {
       unsigned int index = predictTime_ms;
@@ -64,7 +64,7 @@ class Ball {
     void SetRotation(real x, real y, real z, float bias = 1.0);     // radians per second for each axis
     BallSpatialInfo CalculatePrediction();  // returns momentum in 10ms
 
-    bool BallTouchesNet() { return ballTouchesNet; }
+    bool BallTouchesNet() { DO_VALIDATION; return ballTouchesNet; }
     Vector3 GetAveragePosition(unsigned int duration_ms) const;
 
     void Process();

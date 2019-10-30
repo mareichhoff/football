@@ -36,10 +36,10 @@ namespace blunted {
 
     public:
       Vector3();
-      Vector3(const Vector3 &src) { coords[0] = src.coords[0]; coords[1] = src.coords[1]; coords[2] = src.coords[2]; } // gcc bug? this sometimes only sets the last element: memcpy(coords, src.coords, 3 * sizeof(real)); }
+      Vector3(const Vector3 &src) { DO_VALIDATION; coords[0] = src.coords[0]; coords[1] = src.coords[1]; coords[2] = src.coords[2]; } // gcc bug? this sometimes only sets the last element: memcpy(coords, src.coords, 3 * sizeof(real)); }
       Vector3(real xyz);
       Vector3(real x, real y, real z);
-      void Mirror() { coords[0] = -coords[0]; coords[1] = -coords[1]; }
+      void Mirror() { DO_VALIDATION; coords[0] = -coords[0]; coords[1] = -coords[1]; }
 
       void Set(real xyz);
       void Set(real x, real y, real z);
@@ -122,7 +122,7 @@ namespace blunted {
   bool Vector3::operator == (const Vector3 &vector) const {
     if (coords[0] == vector.coords[0] &&
         coords[1] == vector.coords[1] &&
-        coords[2] == vector.coords[2]) {
+        coords[2] == vector.coords[2]) { DO_VALIDATION;
       return true;
     }
     return false;
@@ -134,12 +134,12 @@ namespace blunted {
   }
 
   inline
-  void Vector3::operator = (const real src) {
+  void Vector3::operator = (const real src) { DO_VALIDATION;
     Set(src);
   }
 
   inline
-  void Vector3::operator = (const Vector3 &src) {
+  void Vector3::operator = (const Vector3 &src) { DO_VALIDATION;
     coords[0] = src.coords[0];
     coords[1] = src.coords[1];
     coords[2] = src.coords[2];
@@ -156,7 +156,7 @@ namespace blunted {
   }
 
   inline
-  Vector3 &Vector3::operator *= (const real scalar) {
+  Vector3 &Vector3::operator *= (const real scalar) { DO_VALIDATION;
     coords[0] *= scalar;
     coords[1] *= scalar;
     coords[2] *= scalar;
@@ -164,7 +164,7 @@ namespace blunted {
   }
 
   inline
-  Vector3 &Vector3::operator *= (const Vector3 &scalar) {
+  Vector3 &Vector3::operator *= (const Vector3 &scalar) { DO_VALIDATION;
     coords[0] *= scalar.coords[0];
     coords[1] *= scalar.coords[1];
     coords[2] *= scalar.coords[2];
@@ -182,7 +182,7 @@ namespace blunted {
   }
 
   inline
-  Vector3 &Vector3::operator /= (const Vector3 &scalar) {
+  Vector3 &Vector3::operator /= (const Vector3 &scalar) { DO_VALIDATION;
     coords[0] /= scalar.coords[0];
     coords[1] /= scalar.coords[1];
     coords[2] /= scalar.coords[2];
@@ -190,7 +190,7 @@ namespace blunted {
   }
 
   inline
-  Vector3 &Vector3::operator += (const real scalar) {
+  Vector3 &Vector3::operator += (const real scalar) { DO_VALIDATION;
     coords[0] += scalar;
     coords[1] += scalar;
     coords[2] += scalar;
@@ -198,7 +198,7 @@ namespace blunted {
   }
 
   inline
-  Vector3 &Vector3::operator += (const Vector3 &scalar) {
+  Vector3 &Vector3::operator += (const Vector3 &scalar) { DO_VALIDATION;
     coords[0] += scalar.coords[0];
     coords[1] += scalar.coords[1];
     coords[2] += scalar.coords[2];
@@ -206,7 +206,7 @@ namespace blunted {
   }
 
   inline
-  Vector3 &Vector3::operator -= (const Vector3 &scalar) {
+  Vector3 &Vector3::operator -= (const Vector3 &scalar) { DO_VALIDATION;
     coords[0] -= scalar.coords[0];
     coords[1] -= scalar.coords[1];
     coords[2] -= scalar.coords[2];
@@ -245,8 +245,8 @@ namespace blunted {
 
   inline
   bool Vector3::operator < (const Vector3 &vector) const {
-    if (coords[0] == vector.coords[0]) {
-      if (coords[1] == vector.coords[1]) {
+    if (coords[0] == vector.coords[0]) { DO_VALIDATION;
+      if (coords[1] == vector.coords[1]) { DO_VALIDATION;
         return coords[2] < vector.coords[2];
       } else return coords[1] < vector.coords[1];
     } else return coords[0] < vector.coords[0];
@@ -283,7 +283,7 @@ namespace blunted {
   }
 
   inline
-  void Vector3::Rotate(const Quaternion &quat) {
+  void Vector3::Rotate(const Quaternion &quat) { DO_VALIDATION;
 
     // cross product
     float uvx = coords[2] * quat.elements[1] - coords[1] * quat.elements[2];
@@ -308,7 +308,7 @@ namespace blunted {
   }
 
   inline
-  void Vector3::Rotate2D(const radian angle) {
+  void Vector3::Rotate2D(const radian angle) { DO_VALIDATION;
     real x = (coords[0] * std::cos(angle)) - (coords[1] * std::sin(angle));
     real y = (coords[1] * std::cos(angle)) + (coords[0] * std::sin(angle));
     coords[0] = x;

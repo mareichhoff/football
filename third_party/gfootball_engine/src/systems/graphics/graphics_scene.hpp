@@ -55,9 +55,9 @@ namespace blunted {
 
       virtual ISystemObject *CreateSystemObject(Object* object);
 
-      virtual void SetGravity(const Vector3 &gravity) {}
-      virtual void SetErrorCorrection(float value) {}
-      virtual void SetConstraintForceMixing(float value) {}
+      virtual void SetGravity(const Vector3 &gravity) { DO_VALIDATION;}
+      virtual void SetErrorCorrection(float value) { DO_VALIDATION;}
+      virtual void SetConstraintForceMixing(float value) { DO_VALIDATION;}
 
     protected:
       GraphicsScene *caller;

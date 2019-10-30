@@ -22,7 +22,10 @@
 #include "../../../../../main.hpp"
 #include "../strategy.hpp"
 
-void GoalieDefaultStrategy::RequestInput(ElizaController *controller, const MentalImage *mentalImage, Vector3 &direction, float &velocity) {
+void GoalieDefaultStrategy::RequestInput(ElizaController *controller,
+                                         const MentalImage *mentalImage,
+                                         Vector3 &direction, float &velocity) {
+  DO_VALIDATION;
 
   // base position
   float lineDistance = 10.0f; // default distance keeper stays in front of goal line
@@ -35,12 +38,13 @@ void GoalieDefaultStrategy::RequestInput(ElizaController *controller, const Ment
 
   float maxVelocity = sprintVelocity;
 
-  if (ballPos.coords[0] * controller->GetTeam()->GetDynamicSide() >
-      0) {  // optimization
+  if (ballPos.coords[0] * controller->GetTeam()->GetDynamicSide() > 0) {
+    DO_VALIDATION;  // optimization
 
     CalculateIfBallIsBoundForGoal(controller, mentalImage);
 
     if (!IsBallBoundForGoal()) {
+      DO_VALIDATION;
 
       // tactical position, make goal as small as possible
 
@@ -86,12 +90,14 @@ void GoalieDefaultStrategy::RequestInput(ElizaController *controller, const Ment
       // when opponent comes rushing in and team mates are too far away to help, come out to 'reduce goal size'
 
       if (controller->GetFadingTeamPossessionAmount() < 1.0f) {
+        DO_VALIDATION;
 
         Player *opp = controller->GetOppTeam()->GetDesignatedTeamPossessionPlayer();
         Vector3 oppPos = opp->GetPosition() + opp->GetMovement() * 0.32f;
 
         // if opp isn't in ball control, don't use ball pos but opp pos
         if (opp->HasPossession() == false) {
+          DO_VALIDATION;
           ballToGoal.SetVertex(0, oppPos * 0.6f + ballPos * 0.4f);
         } else {
           ballToGoal.SetVertex(0, oppPos * 0.4f + ballPos * 0.6f);
@@ -108,11 +114,13 @@ void GoalieDefaultStrategy::RequestInput(ElizaController *controller, const Ment
         Player *mate = AI_GetClosestPlayer(controller->GetTeam(), shootingPoint, false, static_cast<Player*>(controller->GetPlayer()));
         float mateToThresholdDistance = 99999;
         if (mate) {
+          DO_VALIDATION;
           Vector3 matePos = mate->GetPosition() + mate->GetMovement() * 0.24f;
           mateToThresholdDistance = (shootingPoint - matePos).GetLength();
         }
 
-        if (mateToThresholdDistance > oppToThresholdDistance + 1.0f) { // come out, brave keeper!
+        if (mateToThresholdDistance > oppToThresholdDistance + 1.0f) {
+          DO_VALIDATION;  // come out, brave keeper!
 
           awayFromGoalBias = 1.0f;
 
@@ -120,6 +128,7 @@ void GoalieDefaultStrategy::RequestInput(ElizaController *controller, const Ment
           // basically, the same as the above code, but with the secondary opponent and mate
           Player *oppHelper = AI_GetClosestPlayer(controller->GetOppTeam(), goalPos, false, opp);
           if (oppHelper) {
+            DO_VALIDATION;
 
             Vector3 oppHelperPosition = oppHelper->GetPosition() + oppHelper->GetMovement() * 0.32f;
 
@@ -146,10 +155,9 @@ void GoalieDefaultStrategy::RequestInput(ElizaController *controller, const Ment
 
             awayFromGoalBias = clamp(1.0f - (secondaryDistanceDiff * helperVSPrimaryDistanceRatio), 0.0f, 1.0f);
           }
-
         }
 
-      } // end keeper come out code
+      }  // end keeper come out code
 
       bool applyRushOut = controller->GetTeam()->GetController()->GetEndApplyKeeperRush_ms() > controller->GetMatch()->GetActualTime_ms();
       if (applyRushOut) awayFromGoalBias = 1.0f;
@@ -180,7 +188,6 @@ void GoalieDefaultStrategy::RequestInput(ElizaController *controller, const Ment
       targetPos.coords[0] = clamp(targetPos.coords[0], -pitchHalfW + 0.2f, pitchHalfW - 0.2f); // not very useful to stand behind backline
 
     } else {
-
       // intercept ball
       maxVelocity = sprintVelocity;
 
@@ -200,9 +207,11 @@ void GoalieDefaultStrategy::RequestInput(ElizaController *controller, const Ment
 
       bool should_gk_run_towards_the_goal = false;
       if (u_at_1sec > 1e-4) {
+        DO_VALIDATION;
         float time_to_reach_gk = u / u_at_1sec;
         Vector3 ball_position_at_gk = mentalImage->GetBallPrediction(10 + 1000 * time_to_reach_gk);
         if (ball_position_at_gk.coords[2] > 2.5) {
+          DO_VALIDATION;
           should_gk_run_towards_the_goal = true;
         }
       }
@@ -210,6 +219,7 @@ void GoalieDefaultStrategy::RequestInput(ElizaController *controller, const Ment
       u = clamp(u, 0.0f, 1.0f);
 
       if (should_gk_run_towards_the_goal) {
+        DO_VALIDATION;
         targetPos = ballOverGoalLinePos;
       } else {
         targetPos = ballToGoal.GetVertex(0) + (ballToGoal.GetVertex(1) - ballToGoal.GetVertex(0)) * u;
@@ -224,7 +234,9 @@ void GoalieDefaultStrategy::RequestInput(ElizaController *controller, const Ment
   direction.Normalize(controller->GetPlayer()->GetDirectionVec());
 }
 
-void GoalieDefaultStrategy::CalculateIfBallIsBoundForGoal(ElizaController *controller, const MentalImage *mentalImage) {
+void GoalieDefaultStrategy::CalculateIfBallIsBoundForGoal(
+    ElizaController *controller, const MentalImage *mentalImage) {
+  DO_VALIDATION;
 
   ballBoundForGoal = false;
   bool intersect = false;
@@ -233,33 +245,36 @@ void GoalieDefaultStrategy::CalculateIfBallIsBoundForGoal(ElizaController *contr
   int side = controller->GetTeam()->GetDynamicSide();
 
   float panic = 1.02f + (1.0f - (controller->GetPlayer()->GetStat(mental_defensivepositioning) * 0.6f + controller->GetPlayer()->GetStat(mental_vision) * 0.4f)) * 0.5f;
-  if (mentalImage->GetBallPrediction(4000).coords[0] * side > pitchHalfW && (controller->GetPlayer()->GetPosition() - mentalImage->GetBallPrediction(250)).GetLength() < 32.0f) { // only if ball is close enough (cpu optimization)
+  if (mentalImage->GetBallPrediction(4000).coords[0] * side > pitchHalfW &&
+      (controller->GetPlayer()->GetPosition() -
+       mentalImage->GetBallPrediction(250))
+              .GetLength() < 32.0f) {
+    DO_VALIDATION;  // only if ball is close enough (cpu optimization)
 
-/* 3d version
-    Line line;
-    line.SetVertex(0, mentalImage->GetBallPrediction(40));
-    line.SetVertex(1, mentalImage->GetBallPrediction(4000));
-    //line.SetVertex(1, mentalImage->GetBallPrediction(0) + match->GetBall()->GetMovement() * 800);
-    Triangle goal1;
-    goal1.SetVertex(0, Vector3((pitchHalfW - 0.0) * side,  3.7 * panic, 0));
-    goal1.SetVertex(1, Vector3((pitchHalfW - 0.0) * side, -3.7 * panic, 0));
-    goal1.SetVertex(2, Vector3((pitchHalfW - 0.0) * side,  3.7 * panic, 2.5 * panic));
-    goal1.SetNormals(Vector3(-side, 0, 0));
-    Triangle goal2;
-    goal2.SetVertex(0, Vector3((pitchHalfW - 0.0) * side, -3.7 * panic, 0));
-    goal2.SetVertex(1, Vector3((pitchHalfW - 0.0) * side, -3.7 * panic, 2.5 * panic));
-    goal2.SetVertex(2, Vector3((pitchHalfW - 0.0) * side,  3.7 * panic, 2.5 * panic));
-    goal2.SetNormals(Vector3(-side, 0, 0));
+    /* 3d version
+        Line line;
+        line.SetVertex(0, mentalImage->GetBallPrediction(40));
+        line.SetVertex(1, mentalImage->GetBallPrediction(4000));
+        //line.SetVertex(1, mentalImage->GetBallPrediction(0) +
+       match->GetBall()->GetMovement() * 800); Triangle goal1;
+        goal1.SetVertex(0, Vector3((pitchHalfW - 0.0) * side,  3.7 * panic, 0));
+        goal1.SetVertex(1, Vector3((pitchHalfW - 0.0) * side, -3.7 * panic, 0));
+        goal1.SetVertex(2, Vector3((pitchHalfW - 0.0) * side,  3.7 * panic, 2.5
+       * panic)); goal1.SetNormals(Vector3(-side, 0, 0)); Triangle goal2;
+        goal2.SetVertex(0, Vector3((pitchHalfW - 0.0) * side, -3.7 * panic, 0));
+        goal2.SetVertex(1, Vector3((pitchHalfW - 0.0) * side, -3.7 * panic, 2.5
+       * panic)); goal2.SetVertex(2, Vector3((pitchHalfW - 0.0) * side,  3.7 *
+       panic, 2.5 * panic)); goal2.SetNormals(Vector3(-side, 0, 0));
 
-    //match->SetDebugPilon(Vector3(55 * side, 3.66, 2.44));
-    //match->SetDebugPilon2(line.GetVertex(1));
+        //match->SetDebugPilon(Vector3(55 * side, 3.66, 2.44));
+        //match->SetDebugPilon2(line.GetVertex(1));
 
-    Vector3 intersectVec;
-    intersect = goal1.IntersectsLine(line, intersectVec);
-    if (!intersect) {
-      intersect = goal2.IntersectsLine(line, intersectVec);
-    }
-*/
+        Vector3 intersectVec;
+        intersect = goal1.IntersectsLine(line, intersectVec);
+        if (!intersect) { DO_VALIDATION;
+          intersect = goal2.IntersectsLine(line, intersectVec);
+        }
+    */
 
     // 2d version
 
@@ -274,6 +289,7 @@ void GoalieDefaultStrategy::CalculateIfBallIsBoundForGoal(ElizaController *contr
     if (fabs(intersectPoint.coords[1]) > 3.7 * panic) intersect = false; else intersect = true;
 
     if (intersect) {
+      DO_VALIDATION;
       //SetGreenDebugPilon(intersectPoint);
       ballBoundForGoal_ycoord = intersectPoint.coords[1];
       ballBoundForGoal = true;
@@ -281,10 +297,10 @@ void GoalieDefaultStrategy::CalculateIfBallIsBoundForGoal(ElizaController *contr
       //SetGreenDebugPilon(Vector3(0, 0, -10));
     }
   }
-
 }
 
-void GoalieDefaultStrategy::ProcessState(EnvState* state) {
+void GoalieDefaultStrategy::ProcessState(EnvState *state) {
+  DO_VALIDATION;
   state->process(ballBoundForGoal);
   state->process(ballBoundForGoal_ycoord);
 }

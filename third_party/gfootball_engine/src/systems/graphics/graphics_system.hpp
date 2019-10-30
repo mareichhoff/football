@@ -58,7 +58,7 @@ namespace blunted {
 
       MessageQueue<Overlay2DQueueEntry> &GetOverlay2DQueue();
 
-      Vector3 GetContextSize() { return Vector3(width, height, bpp); }
+      Vector3 GetContextSize() { DO_VALIDATION; return Vector3(width, height, bpp); }
 
       virtual std::string GetName() const { return "graphics"; }
 

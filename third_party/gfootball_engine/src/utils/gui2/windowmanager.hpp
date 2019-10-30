@@ -41,7 +41,7 @@ namespace blunted {
 
       void Exit();
 
-      Gui2Root *GetRoot() { return root; }
+      Gui2Root *GetRoot() { DO_VALIDATION; return root; }
       void SetFocus(Gui2View *view);
 
       void Process();
@@ -55,22 +55,22 @@ namespace blunted {
       void UpdateImagePosition(Gui2View *view) const;
       void RemoveImage(boost::intrusive_ptr<Image2D> image) const;
 
-      void SetTimeStep_ms(unsigned long timeStep_ms) {
+      void SetTimeStep_ms(unsigned long timeStep_ms) { DO_VALIDATION;
         this->timeStep_ms = timeStep_ms;
       };
 
-      bool IsFocussed(Gui2View *view) { if (focus == view) return true; else return false; }
+      bool IsFocussed(Gui2View *view) { DO_VALIDATION; if (focus == view) return true; else return false; }
 
-      Gui2Style *GetStyle() { return style; }
+      Gui2Style *GetStyle() { DO_VALIDATION; return style; }
 
       void Show(Gui2View *view);
       void Hide(Gui2View *view);
 
       float GetAspectRatio() const { return aspectRatio; }
 
-      void SetPageFactory(Gui2PageFactory *factory) { pageFactory = factory; factory->SetWindowManager(this); }
-      Gui2PageFactory *GetPageFactory() { return pageFactory; }
-      Gui2PagePath *GetPagePath() { return pagePath; }
+      void SetPageFactory(Gui2PageFactory *factory) { DO_VALIDATION; pageFactory = factory; factory->SetWindowManager(this); }
+      Gui2PageFactory *GetPageFactory() { DO_VALIDATION; return pageFactory; }
+      Gui2PagePath *GetPagePath() { DO_VALIDATION; return pagePath; }
 
     protected:
       boost::shared_ptr<Scene2D> scene2D;

@@ -23,7 +23,9 @@
 
 #include "../main.hpp"
 
-HumanGamer::HumanGamer(Team *team, IHIDevice *hid, e_PlayerColor color) : team(team), hid(hid), playerColor(color) {
+HumanGamer::HumanGamer(Team *team, IHIDevice *hid, e_PlayerColor color)
+    : team(team), hid(hid), playerColor(color) {
+  DO_VALIDATION;
   controller = new HumanController(team->GetMatch(), hid);
 
   std::vector<Player*> activePlayers;
@@ -33,19 +35,24 @@ HumanGamer::HumanGamer(Team *team, IHIDevice *hid, e_PlayerColor color) : team(t
 }
 
 HumanGamer::~HumanGamer() {
+  DO_VALIDATION;
   delete controller;
 
   if (selectedPlayer) {
+    DO_VALIDATION;
     selectedPlayer->SetExternalController(0);
   }
 }
 
-void HumanGamer::SetSelectedPlayer(Player* player) {
+void HumanGamer::SetSelectedPlayer(Player *player) {
+  DO_VALIDATION;
   if (selectedPlayer) {
+    DO_VALIDATION;
     if (selectedPlayer == player) return;
     selectedPlayer->SetExternalController(0);
   }
   if (player) {
+    DO_VALIDATION;
     selectedPlayer = player;
     selectedPlayer->SetExternalController(controller);
   } else {
@@ -54,6 +61,7 @@ void HumanGamer::SetSelectedPlayer(Player* player) {
 }
 
 void HumanGamer::ProcessState(EnvState *state) {
+  DO_VALIDATION;
   controller->ProcessState(state);
   state->process(selectedPlayer);
 }

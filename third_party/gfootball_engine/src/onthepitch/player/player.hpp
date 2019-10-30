@@ -34,7 +34,7 @@ struct TacticalPlayerSituation {
   float toGoalSpaceRating = 0.0f;
   float spaceRating = 0.0f;
   float forwardRating = 0.0f;
-  void ProcessState(EnvState* state) {
+  void ProcessState(EnvState* state) { DO_VALIDATION;
     state->process(forwardSpaceRating);
     state->process(toGoalSpaceRating);
     state->process(spaceRating);
@@ -60,20 +60,20 @@ class Player : public PlayerBase {
     // go back to bench/take a shower
     virtual void Deactivate();
 
-    bool TouchPending() { return CastHumanoid()->TouchPending(); }
-    bool TouchAnim() { return CastHumanoid()->TouchAnim(); }
-    Vector3 GetTouchPos() { return CastHumanoid()->GetTouchPos(); }
-    int GetTouchFrame() { return CastHumanoid()->GetTouchFrame(); }
-    int GetCurrentFrame() { return CastHumanoid()->GetCurrentFrame(); }
+    bool TouchPending() { DO_VALIDATION; return CastHumanoid()->TouchPending(); }
+    bool TouchAnim() { DO_VALIDATION; return CastHumanoid()->TouchAnim(); }
+    Vector3 GetTouchPos() { DO_VALIDATION; return CastHumanoid()->GetTouchPos(); }
+    int GetTouchFrame() { DO_VALIDATION; return CastHumanoid()->GetTouchFrame(); }
+    int GetCurrentFrame() { DO_VALIDATION; return CastHumanoid()->GetCurrentFrame(); }
 
-    void SelectRetainAnim() { CastHumanoid()->SelectRetainAnim(); }
+    void SelectRetainAnim() { DO_VALIDATION; CastHumanoid()->SelectRetainAnim(); }
 
-    inline e_FunctionType GetCurrentFunctionType() { return CastHumanoid()->GetCurrentFunctionType(); }
+    inline e_FunctionType GetCurrentFunctionType() { DO_VALIDATION; return CastHumanoid()->GetCurrentFunctionType(); }
     FormationEntry GetFormationEntry();
-    inline void SetDynamicFormationEntry(FormationEntry entry) { dynamicFormationEntry = entry; }
-    inline FormationEntry GetDynamicFormationEntry() { return dynamicFormationEntry; }
-    inline void SetManMarking(Player* player) { manMarking = player; }
-    inline Player* GetManMarking() { return manMarking; }
+    inline void SetDynamicFormationEntry(FormationEntry entry) { DO_VALIDATION; dynamicFormationEntry = entry; }
+    inline FormationEntry GetDynamicFormationEntry() { DO_VALIDATION; return dynamicFormationEntry; }
+    inline void SetManMarking(Player* player) { DO_VALIDATION; manMarking = player; }
+    inline Player* GetManMarking() { DO_VALIDATION; return manMarking; }
 
     bool HasPossession() const;
     bool HasBestPossession() const;
@@ -82,13 +82,13 @@ class Player : public PlayerBase {
     inline int GetTimeNeededToGetToBall_ms() const { return timeNeededToGetToBall_ms; }
     inline int GetTimeNeededToGetToBall_optimistic_ms() const { return timeNeededToGetToBall_optimistic_ms; }
     inline int GetTimeNeededToGetToBall_previous_ms() const { return timeNeededToGetToBall_previous_ms; }
-    void SetDesiredTimeToBall_ms(int ms) { desiredTimeToBall_ms = ms; }
+    void SetDesiredTimeToBall_ms(int ms) { DO_VALIDATION; desiredTimeToBall_ms = ms; }
     int GetDesiredTimeToBall_ms() const { return clamp(desiredTimeToBall_ms, timeNeededToGetToBall_ms, 1000000.0f); }
     bool AllowLastDitch(bool includingPossessionAmount = true) const;
 
-    void TriggerControlledBallCollision() { triggerControlledBallCollision = true; }
-    bool IsControlledBallCollisionTriggered() { return triggerControlledBallCollision; }
-    void ResetControlledBallCollisionTrigger() { triggerControlledBallCollision = false; }
+    void TriggerControlledBallCollision() { DO_VALIDATION; triggerControlledBallCollision = true; }
+    bool IsControlledBallCollisionTriggered() { DO_VALIDATION; return triggerControlledBallCollision; }
+    void ResetControlledBallCollisionTrigger() { DO_VALIDATION; triggerControlledBallCollision = false; }
 
     float GetAverageVelocity(float timePeriod_sec); // is reset on ResetSituation() calls
 
@@ -96,7 +96,7 @@ class Player : public PlayerBase {
 
     float GetClosestOpponentDistance() const;
 
-    const TacticalPlayerSituation &GetTacticalSituation() { return tacticalSituation; }
+    const TacticalPlayerSituation &GetTacticalSituation() { DO_VALIDATION; return tacticalSituation; }
 
     virtual void Process();
     virtual void PreparePutBuffers();
@@ -104,13 +104,13 @@ class Player : public PlayerBase {
     void Put2D(bool mirror);
     void Hide2D();
 
-    void GiveYellowCard(unsigned long giveTime_ms) { cards++; cardEffectiveTime_ms = giveTime_ms; }
-    void GiveRedCard(unsigned long giveTime_ms) {
+    void GiveYellowCard(unsigned long giveTime_ms) { DO_VALIDATION; cards++; cardEffectiveTime_ms = giveTime_ms; }
+    void GiveRedCard(unsigned long giveTime_ms) { DO_VALIDATION;
       cards += 3;
       cardEffectiveTime_ms = giveTime_ms;
     }
 
-    bool HasCards() {
+    bool HasCards() { DO_VALIDATION;
       return cards > 0;
     }
 

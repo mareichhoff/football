@@ -24,21 +24,31 @@
 #include "../../main.hpp"
 #include "../../utils.hpp"
 
-PlayerOfficial::PlayerOfficial(e_OfficialType officialType, Match *match, PlayerData *playerData) : PlayerBase(match, playerData), officialType(officialType) {
+PlayerOfficial::PlayerOfficial(e_OfficialType officialType, Match *match,
+                               PlayerData *playerData)
+    : PlayerBase(match, playerData), officialType(officialType) {
+  DO_VALIDATION;
 }
 
-PlayerOfficial::~PlayerOfficial() {
-}
+PlayerOfficial::~PlayerOfficial() { DO_VALIDATION; }
 
 HumanoidBase *PlayerOfficial::CastHumanoid() {
+  DO_VALIDATION;
   return static_cast<HumanoidBase *>(humanoid.get());
 }
 
 RefereeController *PlayerOfficial::CastController() {
+  DO_VALIDATION;
   return static_cast<RefereeController *>(controller.get());
 }
 
-void PlayerOfficial::Activate(boost::intrusive_ptr<Node> humanoidSourceNode, boost::intrusive_ptr<Node> fullbodySourceNode, std::map<Vector3, Vector3> &colorCoords, boost::intrusive_ptr < Resource<Surface> > kit, boost::shared_ptr<AnimCollection> animCollection, bool lazyPlayer) {
+void PlayerOfficial::Activate(boost::intrusive_ptr<Node> humanoidSourceNode,
+                              boost::intrusive_ptr<Node> fullbodySourceNode,
+                              std::map<Vector3, Vector3> &colorCoords,
+                              boost::intrusive_ptr<Resource<Surface> > kit,
+                              boost::shared_ptr<AnimCollection> animCollection,
+                              bool lazyPlayer) {
+  DO_VALIDATION;
   isActive = true;
   humanoid.reset(new HumanoidBase(
       this, match, humanoidSourceNode, fullbodySourceNode, colorCoords,
@@ -51,19 +61,22 @@ void PlayerOfficial::Activate(boost::intrusive_ptr<Node> humanoidSourceNode, boo
 }
 
 void PlayerOfficial::Deactivate() {
+  DO_VALIDATION;
   PlayerBase::Deactivate();
 }
 
 void PlayerOfficial::Process() {
+  DO_VALIDATION;
   CastController()->Process();
   CastHumanoid()->Process();
 }
 
 void PlayerOfficial::PreparePutBuffers() {
+  DO_VALIDATION;
   PlayerBase::PreparePutBuffers();
 }
 
 void PlayerOfficial::FetchPutBuffers() {
+  DO_VALIDATION;
   PlayerBase::FetchPutBuffers();
 }
-

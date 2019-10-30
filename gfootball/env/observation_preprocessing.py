@@ -85,10 +85,8 @@ def generate_smm(observation, config=None,
       if layer == 'active':
         if o[layer] == -1:
           continue
-        team = ('right_team' if ('is_left' in o and not o['is_left'])
-                else 'left_team')
         mark_points(frame[o_i, :, :, index],
-                    np.array(o[team][o[layer]]).reshape(-1))
+                    np.array(o['left_team'][o[layer]]).reshape(-1))
       else:
         mark_points(frame[o_i, :, :, index], np.array(o[layer]).reshape(-1))
   return frame

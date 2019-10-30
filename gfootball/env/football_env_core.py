@@ -22,6 +22,7 @@ from __future__ import print_function
 import copy
 
 import gfootball_engine as libgame
+from gfootball_engine import GameState
 from gfootball.env import config as cfg
 from gfootball.env import constants
 from gfootball.env import football_action_set
@@ -49,13 +50,14 @@ class FootballEnvCore(object):
     """Reset environment for a new episode using a given config."""
     global _unused_engines
     global _unused_rendering_engine
+    assert (self._env == None or self._env.state == GameState.game_running or
+            self._env.state == GameState.game_done)
     self._waiting_for_game_count = 0
     self._steps_time = 0
     self._step = 0
     self._trace = trace
     self._observation = None
     self._info = None
-    self._done = False
     self._config.NewScenario()
     self._scenario_cfg = self._config.ScenarioConfig()
     if not self._env:
@@ -63,13 +65,13 @@ class FootballEnvCore(object):
         if _unused_rendering_engine:
           self._env = _unused_rendering_engine
           _unused_rendering_engine = None
-          self.rendering_in_use()
+          self._rendering_in_use()
       else:
         if _unused_engines:
           self._env = _unused_engines.pop()
       if not self._env:
         if self._config['render']:
-          self.rendering_in_use()
+          self._rendering_in_use()
         self._env = libgame.GameEnv()
         self._env.start_game(self._config.GameConfig())
     self._left_controllers = []
@@ -80,12 +82,13 @@ class FootballEnvCore(object):
     for _ in range(self._scenario_cfg.right_agents):
       controller = football_action_set.StickyWrapper(self._config, self)
       self._right_controllers.append(controller)
-    self._env.reset(self._config.ScenarioConfig())
+    self._env.reset(self._scenario_cfg)
     while not self._retrieve_observation():
       self._env.step()
+    self._env.state = GameState.game_running
     return True
 
-  def rendering_in_use(self):
+  def _rendering_in_use(self):
     global _active_rendering
     assert not _active_rendering, ('Environment does not support multiple '
                                    'rendering instances in the same process.')
@@ -108,6 +111,7 @@ class FootballEnvCore(object):
     self.close()
 
   def step(self, action):
+    assert self._env.state == GameState.game_running
     # If agent 'holds' the game for too long, just start it.
     if self._waiting_for_game_count > 20:
       self._waiting_for_game_count = 0
@@ -117,8 +121,6 @@ class FootballEnvCore(object):
     assert len(action) == (
         self._scenario_cfg.left_agents + self._scenario_cfg.right_agents)
     debug = {}
-    if self._done:
-      return copy.deepcopy(self._observation), 0, self._done, debug
     debug['action'] = action
     self._left_team = True
     self._player_id = 0
@@ -156,7 +158,7 @@ class FootballEnvCore(object):
     # Finish the episode on score.
     if self._config['end_episode_on_score']:
       if self._observation['score'][0] > 0 or self._observation['score'][1] > 0:
-        self._done = True
+        self._env.state = GameState.game_done
 
     # Finish the episode if the game is out of play (e.g. foul, corner etc)
     if (self._config['end_episode_on_out_of_play'] and self._trace.len() > 0 and
@@ -164,7 +166,7 @@ class FootballEnvCore(object):
             libgame.e_GameMode.e_GameMode_Normal) and
         self._trace[-1]['observation']['game_mode'] == int(
             libgame.e_GameMode.e_GameMode_Normal)):
-      self._done = True
+      self._env.state = GameState.game_done
 
     # End episode when team possessing the ball changes.
     if (self._config['end_episode_on_possession_change'] and
@@ -179,7 +181,7 @@ class FootballEnvCore(object):
       prev_posession = self._trace[prev_posession_id]['observation'][
           'ball_owned_team']
       if prev_posession != -1 and prev_posession != current_posession:
-        self._done = True
+        self._env.state = GameState.game_done
 
     reward = (
         self._observation['score'][0] - self._observation['score'][1] -
@@ -195,8 +197,10 @@ class FootballEnvCore(object):
     else:
       self._waiting_for_game_count = 0
     if self._step >= self._config['game_duration']:
-      self._done = True
-    return self._observation, reward, self._done, debug
+      self._env.state = GameState.game_done
+
+    episode_done = self._env.state == GameState.game_done
+    return self._observation, reward, episode_done, debug
 
   def _retrieve_observation(self):
     """Constructs observations exposed by the environment.
@@ -226,8 +230,8 @@ class FootballEnvCore(object):
     result['ball_rotation'] = np.array(
         [info.ball_rotation[0], info.ball_rotation[1], info.ball_rotation[2]])
 
-    self.convert_players_observation(info.left_team, 'left_team', result)
-    self.convert_players_observation(info.right_team, 'right_team', result)
+    self._convert_players_observation(info.left_team, 'left_team', result)
+    self._convert_players_observation(info.right_team, 'right_team', result)
     result['left_agent_sticky_actions'] = []
     result['left_agent_controlled_player'] = []
     result['right_agent_sticky_actions'] = []
@@ -264,7 +268,7 @@ class FootballEnvCore(object):
     self._info = info
     return info.is_in_play
 
-  def convert_players_observation(self, players, name, result):
+  def _convert_players_observation(self, players, name, result):
     """Converts internal players representation to the public one.
 
        Internal representation comes directly from gameplayfootball engine.
@@ -302,6 +306,8 @@ class FootballEnvCore(object):
 
   def observation(self):
     """Returns the current observation of the game."""
+    assert (self._env.state == GameState.game_running or
+            self._env.state == GameState.game_done)
     return copy.deepcopy(self._observation)
 
   def perform_action(self, action):
@@ -309,11 +315,20 @@ class FootballEnvCore(object):
     self._env.perform_action(action, self._left_team, self._player_id)
 
   def get_state(self):
+    assert (self._env.state == GameState.game_running or
+            self._env.state == GameState.game_done)
     return self._env.get_state()
 
   def set_state(self, state):
     return self._env.set_state(state)
 
+  def get_tracker(self):
+    tracker = libgame.Tracker()
+    self._env.set_tracker(tracker)
+    return tracker
+
+  def set_tracker(self, tracker):
+    self._env.set_tracker(tracker)
 
   def render(self, mode):
     if 'frame' not in self._observation:

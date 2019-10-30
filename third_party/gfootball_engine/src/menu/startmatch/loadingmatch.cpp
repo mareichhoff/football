@@ -23,7 +23,10 @@
 
 using namespace blunted;
 
-LoadingMatchPage::LoadingMatchPage(Gui2WindowManager *windowManager, const Gui2PageData &pageData) : Gui2Page(windowManager, pageData) {
+LoadingMatchPage::LoadingMatchPage(Gui2WindowManager *windowManager,
+                                   const Gui2PageData &pageData)
+    : Gui2Page(windowManager, pageData) {
+  DO_VALIDATION;
 
   Gui2Image *loading = new Gui2Image(windowManager, "image_main_loading", 0, 0, 100, 100);
   loading->LoadImage("media/menu/main/loading01.png");
@@ -63,18 +66,20 @@ LoadingMatchPage::LoadingMatchPage(Gui2WindowManager *windowManager, const Gui2P
   windowManager->GetPagePath()->Clear();
 }
 
-LoadingMatchPage::~LoadingMatchPage() {
-}
+LoadingMatchPage::~LoadingMatchPage() { DO_VALIDATION; }
 
 void LoadingMatchPage::Process() {
+  DO_VALIDATION;
   Gui2Page::Process();
 
   if (!sentStartGameSignal) {
+    DO_VALIDATION;
     sentStartGameSignal = true;
     GetMenuTask()->SetMenuAction(e_MenuAction_Game);
   }
 }
 
 void LoadingMatchPage::Close() {
+  DO_VALIDATION;
   windowManager->GetPageFactory()->CreatePage((int)e_PageID_Game, 0);
 }

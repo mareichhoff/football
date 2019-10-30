@@ -37,6 +37,9 @@ class CoreAction(object):
     self._directional = directional
     self._release = release
 
+  def is_in_actionset(self, config):
+    return self in get_action_set(config)
+
   def __eq__(self, other):
     assert set(other.__dict__) == set(self.__dict__)
     return self._name == other._name

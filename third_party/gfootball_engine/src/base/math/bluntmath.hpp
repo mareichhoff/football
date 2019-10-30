@@ -36,9 +36,9 @@ namespace blunted {
   constexpr real pi = 3.1415926535897932384626433832795028841972f; // last decimal rounded ;)
   class radian {
    public:
-    radian() {}
-    radian(float r) : _angle(r) {}
-    radian &operator+=(radian r) {
+    radian() { DO_VALIDATION;}
+    radian(float r) : _angle(r) { DO_VALIDATION;}
+    radian &operator+=(radian r) { DO_VALIDATION;
       _angle += r._angle;
       _rotated ^= r._rotated;
       return *this;
@@ -48,21 +48,21 @@ namespace blunted {
       _rotated ^= r._rotated;
       return *this;
     }
-    radian &operator/=(radian r) {
+    radian &operator/=(radian r) { DO_VALIDATION;
       *this = radian(real(*this) / real(r));
       return *this;
     }
-    radian &operator*=(radian r) {
+    radian &operator*=(radian r) { DO_VALIDATION;
       *this = radian(real(*this) * real(r));
       return *this;
     }
     operator real() const {
-      if (_rotated) {
+      if (_rotated) { DO_VALIDATION;
         return _angle - pi;
       }
       return _angle;
     }
-    void Mirror() {
+    void Mirror() { DO_VALIDATION;
       _rotated = !_rotated;
     }
    private:
@@ -78,7 +78,7 @@ namespace blunted {
   real boostrandom(real min, real max);
   real random_non_determ(real min, real max);
 
-  inline float curve(float source, float bias = 1.0f) { // make linear / into sined _/-
+  inline float curve(float source, float bias = 1.0f) { DO_VALIDATION; // make linear / into sined _/-
     return (std::sin((source - 0.5f) * pi) * 0.5f + 0.5f) * bias +
            source * (1.0f - bias);
   }

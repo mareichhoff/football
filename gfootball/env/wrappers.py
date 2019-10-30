@@ -207,13 +207,14 @@ class CheckpointRewardWrapper(gym.RewardWrapper):
     return self.env.reset()
 
   def reward(self, reward):
-    if self.env.unwrapped.last_observation is None:
+    observation = self.env.unwrapped.observation()
+    if observation is None:
       return reward
 
-    assert len(reward) == len(self.env.unwrapped.last_observation)
+    assert len(reward) == len(observation)
 
     for rew_index in range(len(reward)):
-      o = self.env.unwrapped.last_observation[rew_index]
+      o = observation[rew_index]
       is_left_to_right = o['is_left']
 
       if reward[rew_index] == 1:
@@ -225,15 +226,12 @@ class CheckpointRewardWrapper(gym.RewardWrapper):
 
       # Check if the active player has the ball.
       if ('ball_owned_team' not in o or
-          o['ball_owned_team'] != (0 if is_left_to_right else 1) or
+          o['ball_owned_team'] != 0 or
           'ball_owned_player' not in o or
           o['ball_owned_player'] != o['active']):
         continue
 
-      if is_left_to_right:
-        d = ((o['ball'][0] - 1) ** 2 + o['ball'][1] ** 2) ** 0.5
-      else:
-        d = ((o['ball'][0] + 1) ** 2 + o['ball'][1] ** 2) ** 0.5
+      d = ((o['ball'][0] - 1) ** 2 + o['ball'][1] ** 2) ** 0.5
 
       # Collect the checkpoints.
       # We give reward for distance 1 to 0.2.

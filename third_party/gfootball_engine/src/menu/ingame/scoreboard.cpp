@@ -27,6 +27,7 @@ using namespace blunted;
 
 Gui2ScoreBoard::Gui2ScoreBoard(Gui2WindowManager *windowManager, Match *match)
     : Gui2View(windowManager, "scoreboard", 2, 2, 96, 4) {
+  DO_VALIDATION;
   x_percent = 2;
   y_percent = 2;
   width_percent = 96;
@@ -108,21 +109,23 @@ Gui2ScoreBoard::Gui2ScoreBoard(Gui2WindowManager *windowManager, Match *match)
   this->Show();
 }
 
-Gui2ScoreBoard::~Gui2ScoreBoard() {
-}
+Gui2ScoreBoard::~Gui2ScoreBoard() { DO_VALIDATION; }
 
-void Gui2ScoreBoard::GetImages(std::vector < boost::intrusive_ptr<Image2D> > &target) {
+void Gui2ScoreBoard::GetImages(
+    std::vector<boost::intrusive_ptr<Image2D> > &target) {
+  DO_VALIDATION;
   Gui2View::GetImages(target);
 }
 
-void Gui2ScoreBoard::Redraw() {
-}
+void Gui2ScoreBoard::Redraw() { DO_VALIDATION; }
 
 void Gui2ScoreBoard::SetTimeStr(const std::string &timeStr) {
+  DO_VALIDATION;
   timeCaption->SetCaption(timeStr);
 }
 
 void Gui2ScoreBoard::SetGoalCount(int teamID, int goalCount) {
+  DO_VALIDATION;
   std::string goalStr = "";
   if (goalCount < 10) goalStr.append(" ");
   goalStr.append(int_to_str(goalCount));

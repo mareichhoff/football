@@ -46,8 +46,8 @@ class HumanGamer {
 
     Player *GetSelectedPlayer() const { return selectedPlayer; }
     void SetSelectedPlayer(Player* player);
-    IHIDevice *GetHIDevice() { return hid; }
-    HumanController* GetHumanController() { return controller; }
+    IHIDevice *GetHIDevice() { DO_VALIDATION; return hid; }
+    HumanController* GetHumanController() { DO_VALIDATION; return controller; }
     void ProcessState(EnvState *state);
     e_PlayerColor GetPlayerColor() const { return playerColor; }
 

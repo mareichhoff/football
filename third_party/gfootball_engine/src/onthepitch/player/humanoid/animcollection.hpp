@@ -34,13 +34,13 @@ inline float ClampVelocity(float velocity);
 inline float EnumToFloatVelocity(e_Velocity velocity);
 inline e_Velocity FloatToEnumVelocity(float velocity);
 
-radian FixAngle(radian angle) {
+radian FixAngle(radian angle) { DO_VALIDATION;
   // convert engine angle into football angle (different base orientation: 'down' on y instead of 'right' on x)
   angle += 0.5f * pi;
   return ModulateIntoRange(-pi, pi, angle);
 }
 
-float RangeVelocity(float velocity) {
+float RangeVelocity(float velocity) { DO_VALIDATION;
   float retVelocity = idleVelocity;
   if (velocity >= idleDribbleSwitch && velocity < dribbleWalkSwitch) retVelocity = dribbleVelocity;
   else if (velocity >= dribbleWalkSwitch && velocity < walkSprintSwitch) retVelocity = walkVelocity;
@@ -48,14 +48,14 @@ float RangeVelocity(float velocity) {
   return retVelocity;
 }
 
-float ClampVelocity(float velocity) {
+float ClampVelocity(float velocity) { DO_VALIDATION;
   if (velocity < 0) return 0;
   if (velocity > sprintVelocity) return sprintVelocity;
   return velocity;
 }
 
-float EnumToFloatVelocity(e_Velocity velocity) {
-  switch (velocity) {
+float EnumToFloatVelocity(e_Velocity velocity) { DO_VALIDATION;
+  switch (velocity) { DO_VALIDATION;
     case e_Velocity_Idle:
       return idleVelocity;
       break;
@@ -72,7 +72,7 @@ float EnumToFloatVelocity(e_Velocity velocity) {
   return 0;
 }
 
-e_Velocity FloatToEnumVelocity(float velocity) {
+e_Velocity FloatToEnumVelocity(float velocity) { DO_VALIDATION;
   float rangedVelocity = RangeVelocity(velocity);
   if (rangedVelocity == idleVelocity) return e_Velocity_Idle;
   else if (rangedVelocity == dribbleVelocity) return e_Velocity_Dribble;
@@ -82,7 +82,7 @@ e_Velocity FloatToEnumVelocity(float velocity) {
 }
 
 struct CrudeSelectionQuery {
-  CrudeSelectionQuery() {
+  CrudeSelectionQuery() { DO_VALIDATION;
     byFunctionType = false;
     byFoot = false; foot = e_Foot_Left;
     heedForcedFoot = false; strongFoot = e_Foot_Right;
@@ -164,11 +164,11 @@ class AnimCollection {
 
     void CrudeSelection(DataSet &dataSet, const CrudeSelectionQuery &query);
 
-    inline Animation* GetAnim(int index) {
+    inline Animation* GetAnim(int index) { DO_VALIDATION;
       return animations.at(index);
     }
 
-    inline const Quadrant &GetQuadrant(int id) {
+    inline const Quadrant &GetQuadrant(int id) { DO_VALIDATION;
       return quadrants.at(id);
     }
 

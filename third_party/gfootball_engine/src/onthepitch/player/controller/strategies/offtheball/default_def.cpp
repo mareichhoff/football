@@ -19,7 +19,10 @@
 #include "default_def.hpp"
 #include <cmath>
 
-void DefaultDefenseStrategy::RequestInput(ElizaController *controller, const MentalImage *mentalImage, Vector3 &direction, float &velocity) {
+void DefaultDefenseStrategy::RequestInput(ElizaController *controller,
+                                          const MentalImage *mentalImage,
+                                          Vector3 &direction, float &velocity) {
+  DO_VALIDATION;
 
   bool offensiveComponents = true;
   bool defensiveComponents = true;
@@ -31,6 +34,7 @@ void DefaultDefenseStrategy::RequestInput(ElizaController *controller, const Men
   Vector3 desiredPosition = desiredPosition_static * staticPositionBias + desiredPosition_dynamic * (1.0f - staticPositionBias);
 
   if (offensiveComponents) {
+    DO_VALIDATION;
     // support position
     float attackBias = NormalizedClamp((controller->GetFadingTeamPossessionAmount() - 0.5f) * 1.0f, 0.2f, 0.9f);
     Vector3 supportPosition = controller->GetSupportPosition_ForceField(mentalImage, desiredPosition);
@@ -38,6 +42,7 @@ void DefaultDefenseStrategy::RequestInput(ElizaController *controller, const Men
   }
 
   if (defensiveComponents) {
+    DO_VALIDATION;
 
     float mindset = AI_GetMindSet(static_cast<Player*>(controller->GetPlayer())->GetDynamicFormationEntry().role);
     controller->AddDefensiveComponent(

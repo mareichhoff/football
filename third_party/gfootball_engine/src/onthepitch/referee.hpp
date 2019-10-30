@@ -52,7 +52,7 @@ struct Foul {
   unsigned long foulTime = 0;
   Vector3 foulPosition;
   bool hasBeenProcessed = false;
-  void ProcessState(EnvState* state) {
+  void ProcessState(EnvState* state) { DO_VALIDATION;
     state->process(foulPlayer);
     state->process(foulVictim);
     state->process(foulType);
@@ -73,7 +73,7 @@ class Referee {
 
     void PrepareSetPiece(e_GameMode setPiece);
 
-    const RefereeBuffer &GetBuffer() { return buffer; };
+    const RefereeBuffer &GetBuffer() { DO_VALIDATION; return buffer; };
 
     void AlterSetPiecePrepareTime(unsigned long newTime_ms);
 
@@ -81,8 +81,8 @@ class Referee {
     void TripNotice(Player *tripee, Player *tripper, int tackleType); // 1 == standing tackle resulting in little trip, 2 == standing tackle resulting in fall, 3 == sliding tackle
     bool CheckFoul();
 
-    Player *GetCurrentFoulPlayer() { return foul.foulPlayer; }
-    int GetCurrentFoulType() { return foul.foulType; }
+    Player *GetCurrentFoulPlayer() { DO_VALIDATION; return foul.foulPlayer; }
+    int GetCurrentFoulType() { DO_VALIDATION; return foul.foulType; }
     void ProcessState(EnvState* state);
 
   protected:

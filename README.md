@@ -59,13 +59,14 @@ In order to train with nice replays being saved, run
 `python3 -m gfootball.examples.run_ppo2 --dump_full_episodes=True --render=True`
 
 ## Playing game yourself
-Run `python3 -m gfootball.play_game`. By default, it starts the
-base scenario and the left player is controlled by the keyboard. Different types
-of players are supported (gamepad, external bots, agents...). For possible
+Run `python3 -m gfootball.play_game --action_set=full`. By default, it starts
+the base scenario and the left player is controlled by the keyboard. Different
+types of players are supported (gamepad, external bots, agents...). For possible
 options run `python3 -m gfootball.play_game -helpfull`.
 
 In particular, one can play against agent trained with `run_ppo2` script with
-the following command:
+the following command (notice no action_set flag, as PPO agent uses default
+action set):
 `python3 -m gfootball.play_game --players "keyboard:left_players=1;ppo2_cnn:right_players=1,checkpoint=$YOUR_PATH"`
 
 Please note that playing

@@ -28,36 +28,38 @@
 
 namespace blunted {
 
-  ObjectFactory::ObjectFactory() {
-  }
+ObjectFactory::ObjectFactory() { DO_VALIDATION; }
 
-  ObjectFactory::~ObjectFactory() {
-  }
+ObjectFactory::~ObjectFactory() { DO_VALIDATION; }
 
-  boost::intrusive_ptr<Object> ObjectFactory::CopyObject(boost::intrusive_ptr<Object> source, std::string postfix) {
-    boost::intrusive_ptr<Object> bla;
+boost::intrusive_ptr<Object> ObjectFactory::CopyObject(
+    boost::intrusive_ptr<Object> source, std::string postfix) {
+  DO_VALIDATION;
+  boost::intrusive_ptr<Object> bla;
 
-    switch (source->GetObjectType()) {
-      case e_ObjectType_Camera:
-        bla = new Camera(*static_cast<Camera*>(source.get()));
-        break;
-      case e_ObjectType_Image2D:
-        bla = new Image2D(*static_cast<Image2D*>(source.get()));
-        break;
-      case e_ObjectType_Geometry:
-        bla = new Geometry(*static_cast<Geometry*>(source.get()), postfix);
-        break;
-      case e_ObjectType_Skybox:
-        bla = new Skybox(*static_cast<Skybox*>(source.get()));
-        break;
-      case e_ObjectType_Light:
-        bla = new Light(*static_cast<Light*>(source.get()));
-        break;
-      default:
-        Log(e_FatalError, "ObjectFactory", "CopyObject", "Object type " + int_to_str(source->GetObjectType()) + " not found");
-        break;
-    }
-    assert(bla != boost::intrusive_ptr<Object>());
-    return bla;
+  switch (source->GetObjectType()) {
+    DO_VALIDATION;
+    case e_ObjectType_Camera:
+      bla = new Camera(*static_cast<Camera*>(source.get()));
+      break;
+    case e_ObjectType_Image2D:
+      bla = new Image2D(*static_cast<Image2D*>(source.get()));
+      break;
+    case e_ObjectType_Geometry:
+      bla = new Geometry(*static_cast<Geometry*>(source.get()), postfix);
+      break;
+    case e_ObjectType_Skybox:
+      bla = new Skybox(*static_cast<Skybox*>(source.get()));
+      break;
+    case e_ObjectType_Light:
+      bla = new Light(*static_cast<Light*>(source.get()));
+      break;
+    default:
+      Log(e_FatalError, "ObjectFactory", "CopyObject",
+          "Object type " + int_to_str(source->GetObjectType()) + " not found");
+      break;
   }
+  assert(bla != boost::intrusive_ptr<Object>());
+  return bla;
+}
 }

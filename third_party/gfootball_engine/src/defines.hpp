@@ -155,12 +155,12 @@ struct Position {
       value[2] = z;
     }
   }
-  Position(const Position& other) {
+  Position(const Position& other) { DO_VALIDATION;
     value[0] = other.value[0];
     value[1] = other.value[1];
     value[2] = other.value[2];
   }
-  Position& operator=(float* position) {
+  Position& operator=(float* position) { DO_VALIDATION;
     value[0] = position[0];
     value[1] = position[1];
     value[2] = position[2];
@@ -209,8 +209,8 @@ enum e_Team {
 
 // Information about the player (available from python).
 struct PlayerInfo {
-  PlayerInfo() {}
-  PlayerInfo(const PlayerInfo& f) {
+  PlayerInfo() { DO_VALIDATION;}
+  PlayerInfo(const PlayerInfo& f) { DO_VALIDATION;
     player_position = f.player_position;
     player_direction = f.player_direction;
     has_card = f.has_card;
@@ -235,8 +235,8 @@ struct PlayerInfo {
 };
 
 struct ControllerInfo {
-  ControllerInfo() {}
-  ControllerInfo(int controlled_player) : controlled_player(controlled_player) {}
+  ControllerInfo() { DO_VALIDATION;}
+  ControllerInfo(int controlled_player) : controlled_player(controlled_player) { DO_VALIDATION;}
   bool operator == (const ControllerInfo& f) const {
     return controlled_player == f.controlled_player;
   }

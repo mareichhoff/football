@@ -63,31 +63,31 @@ namespace blunted {
   class Gui2PagePath {
 
     public:
-      Gui2PagePath() {};
-      virtual ~Gui2PagePath() { Clear(); };
+      Gui2PagePath() { DO_VALIDATION;};
+      virtual ~Gui2PagePath() { DO_VALIDATION; Clear(); };
 
-      bool Empty() { return path.empty(); }
+      bool Empty() { DO_VALIDATION; return path.empty(); }
       void Push(const Gui2PageData &pageData,
-                Gui2Page *mostRecentlyCreatedPage) {
+                Gui2Page *mostRecentlyCreatedPage) { DO_VALIDATION;
         CHECK(!this->mostRecentlyCreatedPage);
         path.push_back(pageData);
         this->mostRecentlyCreatedPage = mostRecentlyCreatedPage;
       }
-      void Pop() {
+      void Pop() { DO_VALIDATION;
         path.pop_back();
       }
-      Gui2PageData GetLast() {
+      Gui2PageData GetLast() { DO_VALIDATION;
         return path.back();
       }
-      void Clear() {
+      void Clear() { DO_VALIDATION;
         DeleteCurrent();
         path.clear();
       }
-      Gui2Page* GetMostRecentlyCreatedPage() {
+      Gui2Page* GetMostRecentlyCreatedPage() { DO_VALIDATION;
         return mostRecentlyCreatedPage;
       }
-      void DeleteCurrent() {
-        if (mostRecentlyCreatedPage) {
+      void DeleteCurrent() { DO_VALIDATION;
+        if (mostRecentlyCreatedPage) { DO_VALIDATION;
           mostRecentlyCreatedPage->Exit();
           delete mostRecentlyCreatedPage;
           mostRecentlyCreatedPage = nullptr;

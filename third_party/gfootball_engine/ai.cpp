@@ -41,15 +41,15 @@ class GameEnv_Python : public GameEnv {
   }
 
   void step_python() {
-    SetContext(context);
+    SetGame(this);
     PyThreadState* _save = NULL;
     Py_UNBLOCK_THREADS;
     step();
     Py_BLOCK_THREADS;
   }
 
-  void reset_python(const ScenarioConfig& game_config) {
-    SetContext(context);
+  void reset_python(ScenarioConfig& game_config) {
+    SetGame(this);
     context->step = -1;
     PyThreadState* _save = NULL;
     Py_UNBLOCK_THREADS;
@@ -105,6 +105,12 @@ BOOST_PYTHON_MODULE(_gameplayfootball) {
       .def_readonly("game_mode", &SharedInfo::game_mode)
       .def_readonly("step", &SharedInfo::step);
 
+  enum_<GameState>("GameState")
+      .value("game_created", GameState::game_created)
+      .value("game_initiated", GameState::game_initiated)
+      .value("game_running", GameState::game_running)
+      .value("game_done", GameState::game_done);
+
   class_<GameEnv_Python>("GameEnv")
       .def("start_game", &GameEnv_Python::start_game)
       .def("get_info", &GameEnv_Python::get_info)
@@ -113,8 +119,18 @@ BOOST_PYTHON_MODULE(_gameplayfootball) {
       .def("step", &GameEnv_Python::step_python)
       .def("get_state", &GameEnv_Python::get_state_python)
       .def("set_state", &GameEnv_Python::set_state)
-      .def("reset", &GameEnv_Python::reset_python);
+      .def("set_tracker", &GameEnv_Python::set_tracker)
+      .def("reset", &GameEnv_Python::reset_python)
+      .def_readwrite("state", &GameEnv_Python::state)
+      .def_readwrite("waiting_for_game_count",
+                     &GameEnv_Python::waiting_for_game_count);
   ;
+
+  class_<Tracker>("Tracker")
+      .def("setSession", &Tracker::setSession)
+      .def("reset", &Tracker::reset)
+      .def("disable", &Tracker::disable)
+      .def("failure", &Tracker::isFailure);
 
   class_<Vector3>("Vector3", init<float, float, float>())
      .def("__getitem__", &Vector3::GetEnvCoord)
@@ -127,7 +143,8 @@ BOOST_PYTHON_MODULE(_gameplayfootball) {
       .def_readwrite("physics_steps_per_frame",
                      &GameConfig::physics_steps_per_frame);
 
-  class_<ScenarioConfig>("ScenarioConfig")
+  class_<ScenarioConfig, SHARED_PTR<ScenarioConfig>, boost::noncopyable>("ScenarioConfig", no_init)
+      .def("make", &ScenarioConfig::make).staticmethod("make")
       .def_readwrite("ball_position", &ScenarioConfig::ball_position)
       .def_readwrite("left_team", &ScenarioConfig::left_team)
       .def_readwrite("right_team", &ScenarioConfig::right_team)
@@ -141,7 +158,10 @@ BOOST_PYTHON_MODULE(_gameplayfootball) {
       .def_readwrite("offsides", &ScenarioConfig::offsides)
       .def_readwrite("real_time", &ScenarioConfig::real_time)
       .def_readwrite("render", &ScenarioConfig::render)
-      .def_readwrite("team_difficulty", &ScenarioConfig::team_difficulty);
+      .def_readwrite("left_team_difficulty",
+                     &ScenarioConfig::left_team_difficulty)
+      .def_readwrite("right_team_difficulty",
+                     &ScenarioConfig::right_team_difficulty);
 
   class_<std::vector<FormationEntry> >("FormationEntryVec").def(
       vector_indexing_suite<std::vector<FormationEntry> >());

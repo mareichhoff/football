@@ -25,13 +25,14 @@
 
 using namespace blunted;
 
-GamePage::GamePage(Gui2WindowManager *windowManager_, const Gui2PageData &pageData_) : Gui2Page(windowManager_, pageData_) {
+GamePage::GamePage(Gui2WindowManager *windowManager_,
+                   const Gui2PageData &pageData_)
+    : Gui2Page(windowManager_, pageData_) {
+  DO_VALIDATION;
   this->Show();
   this->SetFocus();
 }
 
-GamePage::~GamePage() {
-}
+GamePage::~GamePage() { DO_VALIDATION; }
 
-void GamePage::Process() {
-}
+void GamePage::Process() { DO_VALIDATION; }

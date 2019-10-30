@@ -29,10 +29,6 @@ class FootballEnvWrapper(object):
   def __init__(self, config):
     self._config = config
     self._env = football_env_core.FootballEnvCore(config)
-    self._env_state = 'initialized'
-
-  def state(self):
-    return self._env_state
 
   def reset(self):
     """Reset environment for a new episode using a given config."""
@@ -42,14 +38,11 @@ class FootballEnvWrapper(object):
     self._cumulative_reward = 0
     self._step_count = 0
     self._env.reset(self._trace)
-    self._env_state = 'game_started'
 
   def write_dump(self, name):
     return self._trace.write_dump(name)
 
   def step(self, action, extra_data={}):
-    if self._env_state != 'game_started':
-      raise RuntimeError('invalid game state: {}'.format(self._env_state))
     action = [
         football_action_set.named_action_from_action_set(self._action_set, a)
         for a in action
@@ -69,7 +62,6 @@ class FootballEnvWrapper(object):
     self._trace.update(trace)
     if done:
       self.write_dump('episode_done')
-      self._env_state = 'game_done'
       fps = self._step_count / (debug['time'] - self._episode_start)
       game_fps = self._step_count / self._env._steps_time
       logging.info(
@@ -91,6 +83,11 @@ class FootballEnvWrapper(object):
   def set_state(self, state):
     return self._env.set_state(state)
 
+  def get_tracker(self):
+    return self._env.get_tracker()
+
+  def set_tracker(self, tracker):
+    self._env.set_tracker(tracker)
 
   def render(self, mode):
     return self._env.render(mode)

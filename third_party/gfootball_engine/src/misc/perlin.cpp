@@ -14,14 +14,15 @@
 /* coherent noise function over 1, 2 or 3 dimensions */
 /* (copyright Ken Perlin) */
 
-#include <stdlib.h>
-#include <stdio.h>
+#include "perlin.h"
+
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <cmath>
 
-#include "perlin.h"
-
+#include "../base/log.hpp"
 #include "../base/math/bluntmath.hpp"
 
 using namespace blunted;

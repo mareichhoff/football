@@ -40,7 +40,7 @@ class Player(controller_base.Controller):
   """Player with actions coming from gamepad."""
 
   def __init__(self, player_config, env_config):
-    controller_base.Controller.__init__(self, player_config)
+    controller_base.Controller.__init__(self, player_config, env_config)
     self._can_play_right = True
     pygame.init()
     self._index = player_config['player_gamepad']

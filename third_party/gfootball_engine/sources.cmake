@@ -296,7 +296,7 @@ set(CORE_SOURCES
    src/cmake/backtrace.cpp
    src/cmake/file.cpp
    src/misc/perlin.cpp
-   src/misc/hungarian.c
+   src/misc/hungarian.cpp
    src/gametask.cpp
    src/utils.cpp
    src/main.cpp

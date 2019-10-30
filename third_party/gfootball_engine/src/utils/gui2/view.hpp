@@ -48,20 +48,20 @@ namespace blunted {
       virtual void GetImages(std::vector < boost::intrusive_ptr<Image2D> > &target);
 
       virtual void Process();
-      virtual void Redraw() {}
+      virtual void Redraw() { DO_VALIDATION;}
 
       bool IsFocussed();
       void SetFocus();
-      virtual void OnGainFocus() { if (!children.empty()) children.at(0)->SetFocus(); }
-      virtual void OnLoseFocus() {}
-      virtual void SetInFocusPath(bool onOff) {
+      virtual void OnGainFocus() { DO_VALIDATION; if (!children.empty()) children.at(0)->SetFocus(); }
+      virtual void OnLoseFocus() { DO_VALIDATION;}
+      virtual void SetInFocusPath(bool onOff) { DO_VALIDATION;
         isInFocusPath = onOff;
         if (parent) parent->SetInFocusPath(onOff);
       }
 
-      virtual bool IsVisible() { if (isVisible) { if (parent) return parent->IsVisible(); else return true; } else return false; }
-      virtual bool IsSelectable() { return isSelectable; }
-      virtual bool IsOverlay() { return isOverlay; }
+      virtual bool IsVisible() { DO_VALIDATION; if (isVisible) { DO_VALIDATION; if (parent) return parent->IsVisible(); else return true; } else return false; }
+      virtual bool IsSelectable() { DO_VALIDATION; return isSelectable; }
+      virtual bool IsOverlay() { DO_VALIDATION; return isOverlay; }
 
       virtual void Show();
       virtual void ShowAllChildren();

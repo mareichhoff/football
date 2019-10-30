@@ -70,18 +70,18 @@ enum e_DefString {
 
   struct KeyFrames {
     std::vector<std::pair<int, KeyFrame>> d;
-    void clear() {
+    void clear() { DO_VALIDATION;
       d.clear();
     }
-    KeyFrame* getFrame(int frame) {
-      for (auto& i : d) {
-        if (i.first == frame) {
+    KeyFrame* getFrame(int frame) { DO_VALIDATION;
+      for (auto& i : d) { DO_VALIDATION;
+        if (i.first == frame) { DO_VALIDATION;
           return &i.second;
         }
       }
       return nullptr;
     }
-    void addFrame(const std::pair<int, KeyFrame>& frame) {
+    void addFrame(const std::pair<int, KeyFrame>& frame) { DO_VALIDATION;
       d.push_back(frame);
       std::sort(d.begin(), d.end());
     }
@@ -107,8 +107,8 @@ enum e_DefString {
 
   typedef boost::intrusive_ptr<Node> NodeMap[body_part_max];
 
-  static std::string BodyPartString(BodyPart part) {
-    switch(part) {
+  static std::string BodyPartString(BodyPart part) { DO_VALIDATION;
+    switch(part) { DO_VALIDATION;
       case middle:
         return "middle";
       case neck:
@@ -142,7 +142,7 @@ enum e_DefString {
     }
   }
 
-  static BodyPart BodyPartFromString(const std::string part) {
+  static BodyPart BodyPartFromString(const std::string part) { DO_VALIDATION;
     if (part == "middle")
       return middle;
     if (part == "neck")
@@ -188,7 +188,7 @@ enum e_DefString {
   struct BiasedOffset {
     Quaternion orientation;
     float bias = 0.0f; // 0 .. 1
-    void ProcessState(EnvState* state) {
+    void ProcessState(EnvState* state) { DO_VALIDATION;
       state->process(orientation);
       state->process(bias);
     }
@@ -196,20 +196,20 @@ enum e_DefString {
 
   struct BiasedOffsets {
    public:
-    BiasedOffsets() {
+    BiasedOffsets() { DO_VALIDATION;
     }
-    BiasedOffsets(const BiasedOffsets &obj) {
-      for (int x = 0; x < body_part_max; x++) {
+    BiasedOffsets(const BiasedOffsets &obj) { DO_VALIDATION;
+      for (int x = 0; x < body_part_max; x++) { DO_VALIDATION;
         elements[x] = obj.elements[x];
       }
     }
-    void clear() {
+    void clear() { DO_VALIDATION;
     }
-    inline BiasedOffset& operator[](BodyPart part) {
+    inline BiasedOffset& operator[](BodyPart part) { DO_VALIDATION;
       return elements[part];
     }
-    void ProcessState(EnvState* state) {
-      for (auto& el : elements) {
+    void ProcessState(EnvState* state) { DO_VALIDATION;
+      for (auto& el : elements) { DO_VALIDATION;
         el.ProcessState(state);
       }
       state->process((void*) elements, sizeof(elements));
@@ -225,7 +225,7 @@ enum e_DefString {
     Quaternion orientation;
     int timeDiff_ms = 0;
     BodyPart nodeName;
-    void ProcessState(EnvState* state) {
+    void ProcessState(EnvState* state) { DO_VALIDATION;
       state->process(position);
       state->process(orientation);
       state->process(timeDiff_ms);
@@ -245,45 +245,45 @@ enum e_DefString {
    public:
     std::string get(const std::string& key) const {
       auto iter = values.find(key);
-      if (iter != values.end()) {
+      if (iter != values.end()) { DO_VALIDATION;
         return iter->second;
       } else {
         return "";
       }
     }
-    void set(const std::string& key, const std::string& value) {
+    void set(const std::string& key, const std::string& value) { DO_VALIDATION;
       values[key] = value;
-      if (key == "idlelevel") {
+      if (key == "idlelevel") { DO_VALIDATION;
         _idlelevel = atof(value.c_str());
-      } else if (key == "quadrant_id") {
+      } else if (key == "quadrant_id") { DO_VALIDATION;
         _quadrant_id = atoi(value.c_str());
-      } else if (key == "specialvar1") {
+      } else if (key == "specialvar1") { DO_VALIDATION;
         _specialvar1 = atof(value.c_str());
-      } else if (key == "specialvar2") {
+      } else if (key == "specialvar2") { DO_VALIDATION;
         _specialvar2 = atof(value.c_str());
-      } else if (key == "lastditch") {
+      } else if (key == "lastditch") { DO_VALIDATION;
         _lastditch = value.compare("true") == 0;
-      } else if (key == "baseanim") {
+      } else if (key == "baseanim") { DO_VALIDATION;
         _baseanim = value.compare("true") == 0;
-      } else if (key == "outgoing_special_state") {
+      } else if (key == "outgoing_special_state") { DO_VALIDATION;
         _outgoing_special_state = value;
-      } else if (key == "incoming_retain_state") {
+      } else if (key == "incoming_retain_state") { DO_VALIDATION;
         _incoming_retain_state = value;
-      } else if (key == "incoming_special_state") {
+      } else if (key == "incoming_special_state") { DO_VALIDATION;
         _incoming_special_state = value;
       }
     }
 
-    void set_specialvar1(float v) {
+    void set_specialvar1(float v) { DO_VALIDATION;
       _specialvar1 = v;
     }
 
-    void set_specialvar2(float v) {
+    void set_specialvar2(float v) { DO_VALIDATION;
       _specialvar2 = v;
     }
 
-    void mirror() {
-      for (auto varIter : values) {
+    void mirror() { DO_VALIDATION;
+      for (auto varIter : values) { DO_VALIDATION;
         mirror(varIter.second);
       }
       mirror(_outgoing_special_state);
@@ -302,10 +302,10 @@ enum e_DefString {
     inline const std::string& incoming_special_state() const { return _incoming_special_state; }
 
    private:
-    void mirror(std::string& varData) {
-      if (varData.substr(0, 4) == "left") {
+    void mirror(std::string& varData) { DO_VALIDATION;
+      if (varData.substr(0, 4) == "left") { DO_VALIDATION;
         varData = varData.replace(0, 4, "right");
-      } else if (varData.substr(0, 5) == "right") {
+      } else if (varData.substr(0, 5) == "right") { DO_VALIDATION;
         varData = varData.replace(0, 5, "left");
       }
     }
@@ -372,7 +372,7 @@ enum e_DefString {
       void Load(const std::string &filename);
       void Mirror();
       std::string GetName() const;
-      void SetName(const std::string &name) { this->name = name; }
+      void SetName(const std::string &name) { DO_VALIDATION; this->name = name; }
 
       void AddExtension(const std::string &name, boost::shared_ptr<AnimationExtension> extension);
       boost::shared_ptr<AnimationExtension> GetExtension(const std::string &name);
@@ -385,7 +385,7 @@ enum e_DefString {
       e_DefString GetAnimType() const { return cache_AnimType; }
       const std::string &GetAnimTypeStr() const { return cache_AnimType_str; }
 
-      std::vector<NodeAnimation *> &GetNodeAnimations() {
+      std::vector<NodeAnimation *> &GetNodeAnimations() { DO_VALIDATION;
         return nodeAnimations;
       }
       mutable float order_float = 0;

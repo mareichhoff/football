@@ -22,40 +22,49 @@
 
 namespace blunted {
 
-  Gui2Page::Gui2Page(Gui2WindowManager *windowManager, const Gui2PageData &pageData) : Gui2Frame(windowManager, "page_" + int_to_str(pageData.pageID), 0, 0, 100, 100), pageData(pageData) {
-  }
+Gui2Page::Gui2Page(Gui2WindowManager *windowManager,
+                   const Gui2PageData &pageData)
+    : Gui2Frame(windowManager, "page_" + int_to_str(pageData.pageID), 0, 0, 100,
+                100),
+      pageData(pageData) {
+  DO_VALIDATION;
+}
 
-  Gui2Page::~Gui2Page() {
-  }
+Gui2Page::~Gui2Page() { DO_VALIDATION; }
 
-  void Gui2Page::GoBack() {
-    windowManager->GetPagePath()->Pop();
-    if (!windowManager->GetPagePath()->Empty()) {
-      Gui2PageData prevPage = windowManager->GetPagePath()->GetLast();
-      windowManager->GetPagePath()->Pop(); // pop previous page from path too, since it is going to be added with the createpage again
-      windowManager->GetPageFactory()->CreatePage(prevPage);
-    } // else: no mo menus :[
-    return;
-  }
+void Gui2Page::GoBack() {
+  DO_VALIDATION;
+  windowManager->GetPagePath()->Pop();
+  if (!windowManager->GetPagePath()->Empty()) {
+    DO_VALIDATION;
+    Gui2PageData prevPage = windowManager->GetPagePath()->GetLast();
+    windowManager->GetPagePath()
+        ->Pop();  // pop previous page from path too, since it is going to be
+                  // added with the createpage again
+    windowManager->GetPageFactory()->CreatePage(prevPage);
+  }  // else: no mo menus :[
+  return;
+}
 
-  Gui2PageFactory::Gui2PageFactory() {  }
+Gui2PageFactory::Gui2PageFactory() { DO_VALIDATION; }
 
-  Gui2PageFactory::~Gui2PageFactory() {
-  }
+Gui2PageFactory::~Gui2PageFactory() { DO_VALIDATION; }
 
-  void Gui2PageFactory::SetWindowManager(Gui2WindowManager *wm) {
-    windowManager = wm;
-  }
+void Gui2PageFactory::SetWindowManager(Gui2WindowManager *wm) {
+  DO_VALIDATION;
+  windowManager = wm;
+}
 
-  Gui2Page *Gui2PageFactory::CreatePage(int pageID, void *data) {
-    Gui2PageData pageData;
-    pageData.pageID = pageID;
-    pageData.data = data;
-    Gui2Page *page = CreatePage(pageData);
-    return page;
-    // not going to work: pointer is not persistent, while pagedata is. pageData.pagePointer = CreatePage(pageData);
-    //printf("page created, id %i\n", pageData.pageID);
-    //return pageData.pagePointer;
-  }
-
+Gui2Page *Gui2PageFactory::CreatePage(int pageID, void *data) {
+  DO_VALIDATION;
+  Gui2PageData pageData;
+  pageData.pageID = pageID;
+  pageData.data = data;
+  Gui2Page *page = CreatePage(pageData);
+  return page;
+  // not going to work: pointer is not persistent, while pagedata is.
+  // pageData.pagePointer = CreatePage(pageData);
+  // printf("page created, id %i\n", pageData.pageID);
+  // return pageData.pagePointer;
+}
 }

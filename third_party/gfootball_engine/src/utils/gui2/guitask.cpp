@@ -20,19 +20,25 @@
 
 namespace blunted {
 
-  Gui2Task::Gui2Task(boost::shared_ptr<Scene2D> scene2D, float aspectRatio, float margin) {
-    windowManager = new Gui2WindowManager(scene2D, aspectRatio, margin);
-  }
+Gui2Task::Gui2Task(boost::shared_ptr<Scene2D> scene2D, float aspectRatio,
+                   float margin) {
+  DO_VALIDATION;
+  windowManager = new Gui2WindowManager(scene2D, aspectRatio, margin);
+}
 
-  Gui2Task::~Gui2Task() {
-    windowManager->Exit();
-    delete windowManager;
-  }
+Gui2Task::~Gui2Task() {
+  DO_VALIDATION;
+  windowManager->Exit();
+  delete windowManager;
+}
 
-  void Gui2Task::ProcessPhase() {
-    if (GetScenarioConfig().render) {
-      windowManager->GetRoot()->SetRecursiveZPriority(0);
-    }
-    windowManager->Process();
+void Gui2Task::ProcessPhase() {
+  DO_VALIDATION;
+  if (GetScenarioConfig().render) {
+    DO_VALIDATION;
+    windowManager->GetRoot()->SetRecursiveZPriority(
+        0);
   }
+  windowManager->Process();
+}
 }

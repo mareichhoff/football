@@ -27,9 +27,6 @@ namespace blunted {
   /// load managers, systems, scheduler and scene
   void Initialize(Properties &config);
 
-  /// execute a single scheduler loop
-  void ProcessState(EnvState *state);
-
   /// unload all
   void Exit();
 }

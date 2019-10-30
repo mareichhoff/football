@@ -20,6 +20,11 @@
 
 #include <string>
 
+void DoValidation();
+// Uncomment to enable validation
+// #define DO_VALIDATION DoValidation();
+#define DO_VALIDATION ;
+
 namespace blunted {
 
   enum e_LogType {

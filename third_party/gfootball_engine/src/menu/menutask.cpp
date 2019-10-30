@@ -30,6 +30,7 @@ using namespace blunted;
 MenuTask::MenuTask(float aspectRatio, float margin, TTF_Font *defaultFont,
                    TTF_Font *defaultOutlineFont, const Properties *config)
     : Gui2Task(GetScene2D(), aspectRatio, margin) {
+  DO_VALIDATION;
   Gui2Style *style = windowManager->GetStyle();
 
   style->SetFont(e_TextType_Default, defaultFont);
@@ -58,15 +59,16 @@ MenuTask::MenuTask(float aspectRatio, float margin, TTF_Font *defaultFont,
   int size = GetControllers().size();
 
   for (int i = 0; i < size; i++) {
+    DO_VALIDATION;
     SideSelection side;
     side.controllerID = i;
     // Everybody plays in the same team.
     side.side = -1;
-//      if ((size > 1 && i == 1) || (size == 1 && i == 0)) {
-//        side.side = -1;
-//      } else {
-//        side.side = 0;
-//      }
+    //      if ((size > 1 && i == 1) || (size == 1 && i == 0)) { DO_VALIDATION;
+    //        side.side = -1;
+    //      } else {
+    //        side.side = 0;
+    //      }
     queuedFixture.sides.push_back(side);
   }
 
@@ -84,26 +86,31 @@ MenuTask::MenuTask(float aspectRatio, float margin, TTF_Font *defaultFont,
 }
 
 MenuTask::~MenuTask() {
+  DO_VALIDATION;
   delete windowManager->GetPageFactory();
 }
 
 void MenuTask::MenuAction() {
+  DO_VALIDATION;
   windowManager->GetPagePath()->Clear();
   GetGameTask()->StopMatch();
   windowManager->GetPageFactory()->CreatePage((int)e_PageID_LoadingMatch, 0);
 }
 
 void MenuTask::GameAction() {
+  DO_VALIDATION;
   GetGameTask()->StartMatch();
 }
 
 void MenuTask::ProcessPhase() {
+  DO_VALIDATION;
   Gui2Task::ProcessPhase();
   if (menuAction == e_MenuAction_Menu) {
+    DO_VALIDATION;
     MenuAction();
   } else if (menuAction == e_MenuAction_Game) {
+    DO_VALIDATION;
     GameAction();
   }
   menuAction = e_MenuAction_None;
 }
-

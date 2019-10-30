@@ -37,31 +37,22 @@
 
 namespace blunted {
 
-  void Initialize(Properties &config) {
-    // initialize resource managers
-    GetContext().geometry_manager.RegisterLoader("ase",
-                                                 &GetContext().aseLoader);
-    GetContext().surface_manager.RegisterLoader("jpg",
-                                                &GetContext().imageLoader);
-    GetContext().surface_manager.RegisterLoader("png",
-                                                &GetContext().imageLoader);
-    GetContext().surface_manager.RegisterLoader("bmp",
-                                                &GetContext().imageLoader);
-    TTF_Init();
-  }
+void Initialize(Properties &config) {
+  DO_VALIDATION;
+  // initialize resource managers
+  GetContext().geometry_manager.RegisterLoader("ase", &GetContext().aseLoader);
+  GetContext().surface_manager.RegisterLoader("jpg", &GetContext().imageLoader);
+  GetContext().surface_manager.RegisterLoader("png", &GetContext().imageLoader);
+  GetContext().surface_manager.RegisterLoader("bmp", &GetContext().imageLoader);
+  TTF_Init();
+}
 
-  void ProcessState(EnvState *state) {
-    state->process((void *)&GetContext().rng, sizeof(GetContext().rng));
-    state->process((void *)&GetContext().rng_non_deterministic,
-                   sizeof(GetContext().rng_non_deterministic));
-    GetGameTask()->GetMatch()->ProcessState(state);
-  }
-
-  void Exit() {
-    GetContext().scene2D->Exit();
-    GetContext().scene3D->Exit();
-    GetContext().graphicsSystem->Exit();
-    TTF_Quit();
-    SDL_Quit();
-  }
+void Exit() {
+  DO_VALIDATION;
+  GetContext().scene2D->Exit();
+  GetContext().scene3D->Exit();
+  GetContext().graphicsSystem->Exit();
+  TTF_Quit();
+  SDL_Quit();
+}
 }

@@ -56,9 +56,9 @@ namespace blunted {
 
       virtual e_ObjectType GetObjectType();
 
-      virtual bool IsEnabled() { return enabled; }
-      virtual void Enable() { enabled = true; }
-      virtual void Disable() { enabled = false; }
+      virtual bool IsEnabled() { DO_VALIDATION; return enabled; }
+      virtual void Enable() { DO_VALIDATION; enabled = true; }
+      virtual void Disable() { DO_VALIDATION; enabled = false; }
 
       virtual const Properties &GetProperties() const;
       virtual bool PropertyExists(const char *property) const;
@@ -81,7 +81,7 @@ namespace blunted {
 
       virtual boost::intrusive_ptr<Interpreter> GetInterpreter(e_SystemType targetSystemType);
 
-      virtual void SetPokePriority(int prio) { pokePriority = prio; }
+      virtual void SetPokePriority(int prio) { DO_VALIDATION; pokePriority = prio; }
       virtual int GetPokePriority() const { return pokePriority; }
 
       // set these before creating system objects

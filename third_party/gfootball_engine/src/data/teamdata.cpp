@@ -24,7 +24,9 @@
 #include "../main.hpp"
 
 Vector3 GetDefaultRolePosition(e_PlayerRole role) {
+  DO_VALIDATION;
   switch (role) {
+    DO_VALIDATION;
     case e_PlayerRole_GK:
       return Vector3(-1.0, 0.0, 0);
       break;
@@ -66,6 +68,7 @@ Vector3 GetDefaultRolePosition(e_PlayerRole role) {
 }
 
 TeamData::TeamData(int teamDatabaseID, const std::vector<FormationEntry> &f) {
+  DO_VALIDATION;
   formation.resize(f.empty() ? playerNum : f.size());
   int player_count = formation.size();
   color1.Set(0, 0, 0);
@@ -143,6 +146,7 @@ TeamData::TeamData(int teamDatabaseID, const std::vector<FormationEntry> &f) {
       "position_offense_sidefocus_strength><position_offense_width_factor>"
       "0.740000</position_offense_width_factor>";
   switch (teamDatabaseID) {
+    DO_VALIDATION;
     case 3:
       name = "Frequentists United";
       logo_url = "images_teams/primeradivision/fcbarcelona_logo.png";
@@ -162,6 +166,7 @@ TeamData::TeamData(int teamDatabaseID, const std::vector<FormationEntry> &f) {
   }
 
   if (shortName.compare("") == 0) {
+    DO_VALIDATION;
     shortName = name;
     shortName.erase(remove_if(shortName.begin(), shortName.end(), isspace),
                     shortName.end());
@@ -177,8 +182,11 @@ TeamData::TeamData(int teamDatabaseID, const std::vector<FormationEntry> &f) {
   map_XMLTree::const_iterator iter = tree.children.begin();
 
   while (iter != tree.children.end()) {
+    DO_VALIDATION;
     for (int num = 0; num < player_count; num++) {
+      DO_VALIDATION;
       if ((*iter).first == "p" + int_to_str(num + 1)) {
+        DO_VALIDATION;
         formation[num].databasePosition = GetVectorFromString(
             (*iter).second.children.find("position")->second.value);
         formation[num].role = GetRoleFromString(
@@ -208,19 +216,23 @@ TeamData::TeamData(int teamDatabaseID, const std::vector<FormationEntry> &f) {
   bool changed = true;
 
   while (changed && iterations < maxIterations) {
+    DO_VALIDATION;
     Vector3 offset[player_count];
 
     changed = false;
     for (int p1 = 0; p1 < player_count - 1; p1++) {
+      DO_VALIDATION;
       if (formation[p1].role == e_PlayerRole_GK) continue;
 
       for (int p2 = p1 + 1; p2 < player_count; p2++) {
+        DO_VALIDATION;
         if (formation[p2].role == e_PlayerRole_GK) continue;
 
         Vector3 diff = (formation[p1].position - formation[p2].position);
         // if (diff.GetLength() < 0.1f) diff = Vector3(0, 0.1, 0);
 
         if (diff.GetLength() < minDistanceFraction) {
+          DO_VALIDATION;
           changed = true;
 
           float distanceFactor =
@@ -235,7 +247,9 @@ TeamData::TeamData(int teamDatabaseID, const std::vector<FormationEntry> &f) {
     }
 
     if (changed) {
+      DO_VALIDATION;
       for (int p = 0; p < player_count; p++) {
+        DO_VALIDATION;
         formation[p].position += offset[p];
         formation[p].position.coords[0] =
             clamp(formation[p].position.coords[0], -1, 1);
@@ -248,7 +262,9 @@ TeamData::TeamData(int teamDatabaseID, const std::vector<FormationEntry> &f) {
   }
 
   for (int x = 0; x < player_count; x++) {
+    DO_VALIDATION;
     if (f.empty()) {
+      DO_VALIDATION;
       formation[x].start_position = formation[x].position;
     } else {
       formation[x].start_position = f[x].start_position;
@@ -263,6 +279,7 @@ TeamData::TeamData(int teamDatabaseID, const std::vector<FormationEntry> &f) {
 
   iter = tree.children.begin();
   while (iter != tree.children.end()) {
+    DO_VALIDATION;
     tactics.userProperties.Set((*iter).first,
                                atof((*iter).second.value.c_str()));
     iter++;
@@ -286,7 +303,9 @@ TeamData::TeamData(int teamDatabaseID, const std::vector<FormationEntry> &f) {
 }
 
 TeamData::~TeamData() {
+  DO_VALIDATION;
   for (int i = 0; i < (signed int)playerData.size(); i++) {
+    DO_VALIDATION;
     delete playerData[i];
   }
 }
@@ -297,5 +316,6 @@ FormationEntry TeamData::GetFormationEntry(int num) const {
 }
 
 void TeamData::SetFormationEntry(int num, FormationEntry entry) {
+  DO_VALIDATION;
   formation[num] = entry;
 }

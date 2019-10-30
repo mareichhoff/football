@@ -29,49 +29,63 @@
 #include "../../../main.hpp"
 
 PlayerController::PlayerController(Match *match) : IController(match) {
+  DO_VALIDATION;
   Reset();
 }
 
 void PlayerController::Process() {
+  DO_VALIDATION;
   int reactionTime_ms = GetReactionTime_ms();
   if (match->GetLastTouchPlayer() == CastPlayer() && CastPlayer()->GetLastTouchType() != e_TouchType_Accidental) reactionTime_ms = 0;
   _mentalImageTime = reactionTime_ms;
 }
 
 void PlayerController::SetPlayer(PlayerBase *player) {
+  DO_VALIDATION;
   IController::SetPlayer(player);
   this->team = CastPlayer()->GetTeam();
   this->oppTeam = match->GetTeam(abs(this->team->GetID() - 1));
   assert(this->oppTeam);
 }
 
-Player *PlayerController::CastPlayer() { return static_cast<Player*>(player); }
+Player *PlayerController::CastPlayer() {
+  DO_VALIDATION;
+  return static_cast<Player *>(player);
+}
 
 const MentalImage *PlayerController::GetMentalImage() {
+  DO_VALIDATION;
   return match->GetMentalImage(_mentalImageTime);
 }
 
 int PlayerController::GetReactionTime_ms() {
+  DO_VALIDATION;
   int reactionTime_ms = IController::GetReactionTime_ms();
   reactionTime_ms += (1.0f - GetTeam()->GetAiDifficulty()) * 100;
   return reactionTime_ms;
 }
 
 float PlayerController::GetLastSwitchBias() {
+  DO_VALIDATION;
   if (!match->IsInPlay() || match->IsInSetPiece()) lastSwitchTime_ms = -10000;
   if (lastSwitchTimeDuration_ms > 0) return 1.0f - clamp((match->GetActualTime_ms() - lastSwitchTime_ms) / (float)lastSwitchTimeDuration_ms, 0.0f, 1.0f);
   return 0.0f;
 }
 
-void PlayerController::AddDefensiveComponent(Vector3 &desiredPosition, float bias, Player* forcedOpp) {
+void PlayerController::AddDefensiveComponent(Vector3 &desiredPosition,
+                                             float bias, Player *forcedOpp) {
+  DO_VALIDATION;
 
   Player* opponent = 0;
   if (!forcedOpp) opponent = CastPlayer()->GetManMarking(); else
                          opponent = forcedOpp;
 
-  if (match->IsInPlay() && !match->IsInSetPiece() && CastPlayer()->GetFormationEntry().role != e_PlayerRole_GK) {
+  if (match->IsInPlay() && !match->IsInSetPiece() &&
+      CastPlayer()->GetFormationEntry().role != e_PlayerRole_GK) {
+    DO_VALIDATION;
 
     if (opponent) {
+      DO_VALIDATION;
 
       Vector3 defendPosition = desiredPosition;
 
@@ -86,6 +100,7 @@ void PlayerController::AddDefensiveComponent(Vector3 &desiredPosition, float bia
 
       float shootThreshold = genericOpponentShootThreshold;
       if (opponent == match->GetDesignatedPossessionPlayer()) {
+        DO_VALIDATION;
         shootThreshold = possessionPlayerShootThreshold;
       }
 
@@ -99,6 +114,7 @@ void PlayerController::AddDefensiveComponent(Vector3 &desiredPosition, float bia
       // if shootingPoint.coords[0] exceeds offside trap line, alter oppToThresholdDistance in such a way, that it results in the shootingPoint being at least offsideTrapX distance away from goal (unless player is closer already)
       if (shootingPoint.coords[0] * team->GetDynamicSide() >
           team->GetController()->GetOffsideTrapX() * team->GetDynamicSide()) {
+        DO_VALIDATION;
         Line oppToGoalLine;
         oppToGoalLine.SetVertex(0, oppPos);
         oppToGoalLine.SetVertex(1, goalPos);
@@ -115,6 +131,7 @@ void PlayerController::AddDefensiveComponent(Vector3 &desiredPosition, float bia
 
       float slackedDistance = meToThresholdDistance - (oppToThresholdDistance - bufferDistance);
       if (slackedDistance > 0.0f) {
+        DO_VALIDATION;
         defendPosition = desiredPosition + meToThreshold.GetNormalized(0) * clamp(slackedDistance, 0.0f, meToThresholdDistance);
       }
 
@@ -123,18 +140,18 @@ void PlayerController::AddDefensiveComponent(Vector3 &desiredPosition, float bia
       float actualToThresholdDistance = (shootingPoint - actualPos).GetLength();
       float actualSlackedDistance = actualToThresholdDistance - oppToThresholdDistance;//(oppToThresholdDistance - bufferDistance);
       if (actualSlackedDistance > 0.0f) {
+        DO_VALIDATION;
         defendPosition += (goalPos - defendPosition).GetNormalized(0) * actualSlackedDistance * 0.7f;
       }
 
       desiredPosition = desiredPosition * (1.0f - bias) +
                         defendPosition  * bias;
-
     }
   }
-
 }
 
 Vector3 PlayerController::GetDefendPosition(Player *opp, float distance) {
+  DO_VALIDATION;
 
   PlayerImage oppImage = match->GetMentalImage(_mentalImageTime)->GetPlayerImage(opp);
 
@@ -167,12 +184,12 @@ Vector3 PlayerController::GetDefendPosition(Player *opp, float distance) {
   u = clamp(u, 0.0f, 1.0f);
   Vector3 target = oppToGoalLine.GetVertex(0) + (oppToGoalLine.GetVertex(1) - oppToGoalLine.GetVertex(0)) * u;
 
-/*
-  if (player->GetDebug()) {
-    SetRedDebugPilon(intersect + Vector3(0, 0, 0.1f));
-    SetBlueDebugPilon(target);
-  }
-*/
+  /*
+    if (player->GetDebug()) { DO_VALIDATION;
+      SetRedDebugPilon(intersect + Vector3(0, 0, 0.1f));
+      SetBlueDebugPilon(target);
+    }
+  */
 
   target += (oppToGoal.GetNormalized(0) * sprintVelocity * 0.1f) + (oppImage.movement * 0.14f) + (oppToGoal.GetNormalized(0) * distance);
 
@@ -180,6 +197,7 @@ Vector3 PlayerController::GetDefendPosition(Player *opp, float distance) {
 }
 
 void PlayerController::ProcessPlayerController(EnvState *state) {
+  DO_VALIDATION;
   auto p = CastPlayer();
   state->process(p);
   player = p;
@@ -207,6 +225,7 @@ void PlayerController::ProcessPlayerController(EnvState *state) {
 }
 
 void PlayerController::Reset() {
+  DO_VALIDATION;
 
   lastSwitchTimeDuration_ms = 0;
   lastSwitchTime_ms = -10000;
@@ -231,6 +250,7 @@ void PlayerController::Reset() {
 }
 
 float PlayerController::OppBetweenBallAndMeDot() {
+  DO_VALIDATION;
   Player *opp = match->GetTeam(abs(team->GetID() - 1))->GetDesignatedTeamPossessionPlayer();
   Vector3 MeToOpp = (opp->GetPosition() + opp->GetMovement() * 0.1f) - (CastPlayer()->GetPosition() + CastPlayer()->GetMovement() * 0.1f);
   Vector3 oppToBall = match->GetMentalImage(_mentalImageTime)->GetBallPrediction(100).Get2D() - (opp->GetPosition() + opp->GetMovement() * 0.1f);
@@ -241,6 +261,7 @@ float PlayerController::OppBetweenBallAndMeDot() {
 }
 
 float PlayerController::CouldWinABallDuelLikeliness() {
+  DO_VALIDATION;
   // uses the OppBetweenBallAndMeDot to check for correct angle, but also checks ball distance from opp
   float dot = OppBetweenBallAndMeDot() * 0.5f + 0.5f;
 
@@ -260,11 +281,14 @@ float PlayerController::CouldWinABallDuelLikeliness() {
 }
 
 void PlayerController::_Preprocess() {
+  DO_VALIDATION;
   _oppPlayer = match->GetTeam(abs(team->GetID() - 1))->GetBestPossessionPlayer();
   _timeNeeded_ms = CastPlayer()->GetTimeNeededToGetToBall_ms(); // needed for synced version - if we would ask on the spot and compare to opp, opp may already have calculated a new one while ours has not been processed yet
 }
 
-void PlayerController::_KeeperDeflectCommand(PlayerCommandQueue &commandQueue, bool onlyPickupAnims) {
+void PlayerController::_KeeperDeflectCommand(PlayerCommandQueue &commandQueue,
+                                             bool onlyPickupAnims) {
+  DO_VALIDATION;
 
   if (CastPlayer()->GetFormationEntry().role != e_PlayerRole_GK) return;
   if (match->GetBall()->Predict(400).GetDistance(player->GetPosition()) > ballDistanceOptimizeThreshold + 10.0f) return;
@@ -289,6 +313,7 @@ void PlayerController::_KeeperDeflectCommand(PlayerCommandQueue &commandQueue, b
 }
 
 void PlayerController::_SetPieceCommand(PlayerCommandQueue &commandQueue) {
+  DO_VALIDATION;
   // do not allow running away :p
   PlayerCommand command;
   command.desiredFunctionType = e_FunctionType_Movement;
@@ -297,6 +322,7 @@ void PlayerController::_SetPieceCommand(PlayerCommandQueue &commandQueue) {
   command.desiredDirection = CastPlayer()->GetDirectionVec();
   command.desiredVelocityFloat = idleVelocity;
   if (match->GetBallRetainer() == player) {
+    DO_VALIDATION;
     command.desiredLookAt = player->GetPosition() + inputDirection * 10.0f;
   } else {
     command.desiredLookAt = match->GetBall()->Predict(0).Get2D();
@@ -304,18 +330,26 @@ void PlayerController::_SetPieceCommand(PlayerCommandQueue &commandQueue) {
   commandQueue.push_back(command);
 }
 
-void PlayerController::_BallControlCommand(PlayerCommandQueue &commandQueue, bool idleTurnToOpponentGoal, bool knockOn, bool stickyRunDirection, bool keepCurrentBodyDirection) {
+void PlayerController::_BallControlCommand(PlayerCommandQueue &commandQueue,
+                                           bool idleTurnToOpponentGoal,
+                                           bool knockOn,
+                                           bool stickyRunDirection,
+                                           bool keepCurrentBodyDirection) {
+  DO_VALIDATION;
   if (match->GetBall()->Predict(200).GetDistance(player->GetPosition()) > ballDistanceOptimizeThreshold) return;
   if (match->GetBallRetainer() != 0) return;
 
   if (!CastPlayer()->HasPossession() && !CastPlayer()->AllowLastDitch()) {
+    DO_VALIDATION;
     float strictnessInv = 3.0f;
     if (fabs(match->GetBall()->GetMovement().coords[2]) > 5.0f * strictnessInv) return;
     if ((match->GetBall()->GetMovement().Get2D() - CastPlayer()->GetMovement()).GetLength() > 5.0f * strictnessInv) return;
   }
 
   if (match->GetDesignatedPossessionPlayer() == player ||
-      (team->GetDesignatedTeamPossessionPlayer() == player && CouldWinABallDuelLikeliness() >= 0.25f)) {
+      (team->GetDesignatedTeamPossessionPlayer() == player &&
+       CouldWinABallDuelLikeliness() >= 0.25f)) {
+    DO_VALIDATION;
 
     PlayerCommand command;
     command.desiredFunctionType = e_FunctionType_BallControl;
@@ -324,22 +358,34 @@ void PlayerController::_BallControlCommand(PlayerCommandQueue &commandQueue, boo
     if (quantizeDirection) QuantizeDirection(command.desiredDirection, GetQuantizedDirectionBias());
     command.desiredVelocityFloat = inputVelocityFloat;
 
-    if (FloatToEnumVelocity(command.desiredVelocityFloat) == e_Velocity_Idle && idleTurnToOpponentGoal) {
+    if (FloatToEnumVelocity(command.desiredVelocityFloat) == e_Velocity_Idle &&
+        idleTurnToOpponentGoal) {
+      DO_VALIDATION;
       command.desiredDirection = Vector3(-team->GetDynamicSide(), 0, 0);
     }
 
     if (knockOn) command.modifier |= e_PlayerCommandModifier_KnockOn;
 
-    if (hasPossession && hasBestPossession && command.desiredVelocityFloat > walkSprintSwitch && CastPlayer()->GetFloatVelocity() > dribbleWalkSwitch && stickyRunDirection) {
+    if (hasPossession && hasBestPossession &&
+        command.desiredVelocityFloat > walkSprintSwitch &&
+        CastPlayer()->GetFloatVelocity() > dribbleWalkSwitch &&
+        stickyRunDirection) {
+      DO_VALIDATION;
       radian angle = command.desiredDirection.GetAngle2D(CastPlayer()->GetDirectionVec());
       if (fabs(angle) > 0.125f * pi && fabs(angle) < 0.7f * pi) {
+        DO_VALIDATION;
         if (angle > 0) command.desiredDirection = CastPlayer()->GetDirectionVec().GetRotated2D(0.125f *  pi);
         if (angle < 0) command.desiredDirection = CastPlayer()->GetDirectionVec().GetRotated2D(0.125f * -pi);
       }
     }
 
     command.useDesiredLookAt = true;
-    if (keepCurrentBodyDirection && (CastPlayer()->GetEnumVelocity() == e_Velocity_Walk || CastPlayer()->GetEnumVelocity() == e_Velocity_Dribble) && FloatToEnumVelocity(command.desiredVelocityFloat) == e_Velocity_Dribble) {
+    if (keepCurrentBodyDirection &&
+        (CastPlayer()->GetEnumVelocity() == e_Velocity_Walk ||
+         CastPlayer()->GetEnumVelocity() == e_Velocity_Dribble) &&
+        FloatToEnumVelocity(command.desiredVelocityFloat) ==
+            e_Velocity_Dribble) {
+      DO_VALIDATION;
       // sidestep dribble and such tricks! (not implemented yet, methinks)
       command.desiredVelocityFloat = walkVelocity;
       command.desiredLookAt = CastPlayer()->GetPosition() + CastPlayer()->GetDirectionVec() * 10.0f;
@@ -354,15 +400,22 @@ void PlayerController::_BallControlCommand(PlayerCommandQueue &commandQueue, boo
   }
 }
 
-void PlayerController::_TrapCommand(PlayerCommandQueue &commandQueue, bool idleTurnToOpponentGoal, bool knockOn) {
+void PlayerController::_TrapCommand(PlayerCommandQueue &commandQueue,
+                                    bool idleTurnToOpponentGoal, bool knockOn) {
+  DO_VALIDATION;
 
   if (match->GetBall()->GetMovement().Get2D().GetLength() < 2.0f) return;// - CastPlayer()->GetMovement()).GetLength()
 
   if (match->GetBall()->Predict(200).GetDistance(player->GetPosition()) > ballDistanceOptimizeThreshold) return;
   if (match->GetBallRetainer() != 0) return;
 
-  if (!hasPossession && (match->GetDesignatedPossessionPlayer() == player ||
-                         (team->GetDesignatedTeamPossessionPlayer() == player && CastPlayer()->GetTimeNeededToGetToBall_optimistic_ms() < 1000 && oppTimeNeededToGetToBall > 400 && !oppTeamHasPossession && CouldWinABallDuelLikeliness() >= 0.5f))) {// opp time was 500 ms
+  if (!hasPossession &&
+      (match->GetDesignatedPossessionPlayer() == player ||
+       (team->GetDesignatedTeamPossessionPlayer() == player &&
+        CastPlayer()->GetTimeNeededToGetToBall_optimistic_ms() < 1000 &&
+        oppTimeNeededToGetToBall > 400 && !oppTeamHasPossession &&
+        CouldWinABallDuelLikeliness() >= 0.5f))) {
+    DO_VALIDATION;  // opp time was 500 ms
 
     PlayerCommand command;
     command.desiredFunctionType = e_FunctionType_Trap;
@@ -371,16 +424,21 @@ void PlayerController::_TrapCommand(PlayerCommandQueue &commandQueue, bool idleT
     if (quantizeDirection) QuantizeDirection(command.desiredDirection, GetQuantizedDirectionBias());
 
     command.desiredVelocityFloat = inputVelocityFloat;
-    if (CastPlayer()->GetFormationEntry().role == e_PlayerRole_GK && !team->IsHumanControlled(player)) {
+    if (CastPlayer()->GetFormationEntry().role == e_PlayerRole_GK &&
+        !team->IsHumanControlled(player)) {
+      DO_VALIDATION;
       command.desiredDirection = Vector3(-team->GetDynamicSide(), 0, 0);
       command.desiredVelocityFloat = idleVelocity;
     }
 
-    if (FloatToEnumVelocity(command.desiredVelocityFloat) == e_Velocity_Idle && idleTurnToOpponentGoal) {
+    if (FloatToEnumVelocity(command.desiredVelocityFloat) == e_Velocity_Idle &&
+        idleTurnToOpponentGoal) {
+      DO_VALIDATION;
       command.desiredDirection = Vector3(-team->GetDynamicSide(), 0, 0);
     }
 
     if (knockOn) {
+      DO_VALIDATION;
       command.modifier |= e_PlayerCommandModifier_KnockOn;
     }
 
@@ -391,13 +449,17 @@ void PlayerController::_TrapCommand(PlayerCommandQueue &commandQueue, bool idleT
   }
 }
 
-void PlayerController::_InterfereCommand(PlayerCommandQueue &commandQueue, bool byAnyMeans) {
+void PlayerController::_InterfereCommand(PlayerCommandQueue &commandQueue,
+                                         bool byAnyMeans) {
+  DO_VALIDATION;
   if (match->GetBall()->Predict(200).GetDistance(player->GetPosition()) > ballDistanceOptimizeThreshold) return;
   if (match->GetBallRetainer() != 0) return;
 
   if (!teamHasBestPossession) {
+    DO_VALIDATION;
 
     if (!byAnyMeans) {
+      DO_VALIDATION;
       // if dot nears 1, it means opp is somewhat between ball and me
       if (CouldWinABallDuelLikeliness() < 0.2f) return;
     }
@@ -408,6 +470,7 @@ void PlayerController::_InterfereCommand(PlayerCommandQueue &commandQueue, bool 
 
     command.strictMovement = e_StrictMovement_True;
     if (byAnyMeans) {
+      DO_VALIDATION;
       command.strictMovement = e_StrictMovement_False;
     }
     command.desiredDirection = inputDirection;
@@ -417,18 +480,27 @@ void PlayerController::_InterfereCommand(PlayerCommandQueue &commandQueue, bool 
 }
 
 void PlayerController::_SlidingCommand(PlayerCommandQueue &commandQueue) {
+  DO_VALIDATION;
   if (team->GetHumanGamerCount() != 0) return;
   if (match->GetBallRetainer() != 0) return;
   if (CouldWinABallDuelLikeliness() < 0.7f) return;
 
-  if (!teamHasBestPossession && possessionAmount < 0.6f && match->GetDesignatedPossessionPlayer() != player && oppTeamHasPossession) {
+  if (!teamHasBestPossession && possessionAmount < 0.6f &&
+      match->GetDesignatedPossessionPlayer() != player &&
+      oppTeamHasPossession) {
+    DO_VALIDATION;
 
     Vector3 ballPos = match->GetMentalImage(20)->GetBallPrediction(200);
     Vector3 playerPos = player->GetPosition() + player->GetMovement() * 0.2;
     Vector3 oppPos = _oppPlayer->GetPosition() + _oppPlayer->GetMovement() * 0.2;
 
     float ballDist = (playerPos - ballPos).GetLength();
-    if ((ballDist > 0.7f && ballDist < 1.6f && oppTimeNeededToGetToBall > 260) || (ballDist > 0.6f && ballDist < 1.8f && _oppPlayer->GetCurrentFunctionType() == e_FunctionType_Shot && _oppPlayer->TouchPending())) {
+    if ((ballDist > 0.7f && ballDist < 1.6f &&
+         oppTimeNeededToGetToBall > 260) ||
+        (ballDist > 0.6f && ballDist < 1.8f &&
+         _oppPlayer->GetCurrentFunctionType() == e_FunctionType_Shot &&
+         _oppPlayer->TouchPending())) {
+      DO_VALIDATION;
 
       // no opp in the way?
       PlayerCommand command;
@@ -446,7 +518,9 @@ void PlayerController::_SlidingCommand(PlayerCommandQueue &commandQueue) {
   }
 }
 
-void PlayerController::_MovementCommand(PlayerCommandQueue &commandQueue, bool forceMagnet, bool extraHaste) {
+void PlayerController::_MovementCommand(PlayerCommandQueue &commandQueue,
+                                        bool forceMagnet, bool extraHaste) {
+  DO_VALIDATION;
   auto _mentalImage = match->GetMentalImage(_mentalImageTime);
   int defaultLookAtTime_ms = 40;
 
@@ -496,21 +570,29 @@ void PlayerController::_MovementCommand(PlayerCommandQueue &commandQueue, bool f
       -1.0f, 1.0f);
 
   if (match->GetBallRetainer() == player) {
+    DO_VALIDATION;
 
     autoBias = 0.0f;
 
-  } else if (forceMagnet ||
-             match->GetDesignatedPossessionPlayer() == player ||
-             ( (CastPlayer()->GetLastTouchBias(2000) > 0.01f && possessionAmount > 0.5f) && team->GetDesignatedTeamPossessionPlayer() == player ) ||
-             ( (!oppTeamHasPossession && possessionAmount > 0.5f)                        && team->GetDesignatedTeamPossessionPlayer() == player ) ||
-             ( possessionAmount > 0.99f                                                  && team->GetDesignatedTeamPossessionPlayer() == player ) || // for air balls and such, where multiple players are as likely to get to the ball first
-             ( hasBestPossession                                                         && team->GetDesignatedTeamPossessionPlayer() == player ) ) { // this is constructed inefficiently (double teamplayer thing) on purpose, for clarity.
-
+  } else if (forceMagnet || match->GetDesignatedPossessionPlayer() == player ||
+             ((CastPlayer()->GetLastTouchBias(2000) > 0.01f &&
+               possessionAmount > 0.5f) &&
+              team->GetDesignatedTeamPossessionPlayer() == player) ||
+             ((!oppTeamHasPossession && possessionAmount > 0.5f) &&
+              team->GetDesignatedTeamPossessionPlayer() == player) ||
+             (possessionAmount > 0.99f &&
+              team->GetDesignatedTeamPossessionPlayer() ==
+                  player) ||  // for air balls and such, where multiple players
+                              // are as likely to get to the ball first
+             (hasBestPossession &&
+              team->GetDesignatedTeamPossessionPlayer() == player)) {
+    DO_VALIDATION;  // this is constructed inefficiently (double teamplayer
+                    // thing) on purpose, for clarity.
 
     // WE ARE THE MAN OF THE MOMENT! WOOHOO
 
-
     if (hasBestPossession) {
+      DO_VALIDATION;
 
       Vector3 autoLookAt; // dud
       CastPlayer()->SetDesiredTimeToBall_ms(AI_GetBallControlMovement(
@@ -519,10 +601,11 @@ void PlayerController::_MovementCommand(PlayerCommandQueue &commandQueue, bool f
       autoLookDirection = (autoLookAt - player->GetPosition()).GetNormalized(0);
       autoBias = 1.0f;
 
-    } else { // !hasPossession
+    } else {  // !hasPossession
 
       float haste = 0.0f;
       if (extraHaste || forceMagnet) {
+        DO_VALIDATION;
         haste = 1.0f;
       } else {
         float thresholdPossessionAmountForHaste = 1.1f; // 2.0f - AI_GetMindSet(CastPlayer()->GetFormationEntry().role) * 2.0f; // attacking players may want to gamble on the defenders missing the ball
@@ -539,16 +622,20 @@ void PlayerController::_MovementCommand(PlayerCommandQueue &commandQueue, bool f
       autoBias = 1.0f;
 
       if (match->GetDesignatedPossessionPlayer() != player) {
+        DO_VALIDATION;
         float sameDirFactor = 1.0f - clamp(fabs(autoDirection.GetAngle2D(manualDirection)) / pi, 0.0f, 1.0f);
         sameDirFactor = sameDirFactor * 0.5f + 0.5f;
         autoBias = 0.0f;
         if (CastPlayer()->GetLastTouchBias(2000) > 0.01f) {
+          DO_VALIDATION;
           if (CastPlayer()->GetTimeNeededToGetToBall_ms() < 1700)
             autoBias = std::pow(CastPlayer()->GetLastTouchBias(2000), 0.4f) *
                        std::pow(sameDirFactor, 0.5f);
         }
         if (!oppTeamHasPossession) {
+          DO_VALIDATION;
           if (team->IsHumanControlled(player)) {
+            DO_VALIDATION;
             float magnetBias = std::max(curve(sameDirFactor, 0.8f), powf(GetLastSwitchBias(), 0.5f)); // needed for when we get passed a ball while we are not the designated player. we want to at least try to get there.
             magnetBias *= 1.0f - inputDirIsOwnHalfFactor; // if we run for our own half, don't accidentally magnet somewhere
 
@@ -560,21 +647,19 @@ void PlayerController::_MovementCommand(PlayerCommandQueue &commandQueue, bool f
           }
         }
         if (forceMagnet) {
+          DO_VALIDATION;
           autoBias = 1.0f;
         }
-
       }
-
     }
 
-
   } else if (match->GetDesignatedPossessionPlayer()->GetTeam() != team) {
-
+    DO_VALIDATION;
 
     // OTHER TEAM IS IN BALL CONTROL, DEM BASTERDS
 
     if (team->GetDesignatedTeamPossessionPlayer() == player) {
-
+      DO_VALIDATION;
 
       // WE ARE THE BEST OUR TEAM HAS GOT, CHOOSE OUR ACTIONS WISELY
 
@@ -603,6 +688,7 @@ void PlayerController::_MovementCommand(PlayerCommandQueue &commandQueue, bool f
       // now decide on what auto direction to use, if applicable
       // when farther away from ball/opp, get towards ball/opp, when already close, mimic opponent's movement (sort of an auto 'man marking' thing)
       if (autoBias > 0.0f) {
+        DO_VALIDATION;
         float playerOppDistance = (oppPos - player->GetPosition()).GetLength();
         float manMarkingBias = std::pow(
             1.0f - curve(NormalizedClamp(playerOppDistance, 0.0f, 7.0f), 0.7f),
@@ -622,11 +708,8 @@ void PlayerController::_MovementCommand(PlayerCommandQueue &commandQueue, bool f
         autoVelocityFloat = clamp(autoVelocityFloat_manMarking * manMarkingBias + autoVelocityFloat_hunt * (1.0f - manMarkingBias), idleVelocity, sprintVelocity);
         autoLookDirection = ( (autoLookDirection_manMarking * manMarkingBias + autoLookDirection_hunt * (1.0f - manMarkingBias)) ).GetNormalized(0);
       }
-
     }
-
   }
-
 
   {
     Vector3 autoMovement = autoDirection * autoVelocityFloat;
@@ -642,10 +725,10 @@ void PlayerController::_MovementCommand(PlayerCommandQueue &commandQueue, bool f
   }
 
   commandQueue.push_back(command);
-
 }
 
 void PlayerController::_CalculateSituation() {
+  DO_VALIDATION;
   hasPossession = CastPlayer()->HasPossession();
   hasUniquePossession = CastPlayer()->HasUniquePossession();
   teamHasPossession = team->HasPossession();
@@ -660,6 +743,7 @@ void PlayerController::_CalculateSituation() {
 
   // when ball is close, don't fade possession bias (so we can take immediate action)
   if (hasBestChanceOfPossession) {
+    DO_VALIDATION;
     float distanceBias = std::pow(
         NormalizedClamp(
             (match->GetBall()->Predict(300).Get2D() - player->GetPosition())

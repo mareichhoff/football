@@ -49,7 +49,7 @@ namespace blunted {
 
       template <class T>
       void GetObjects(e_ObjectType targetObjectType, std::list < boost::intrusive_ptr<T> > &gatherObjects) const {
-        if (!SupportedObjectType(targetObjectType)) {
+        if (!SupportedObjectType(targetObjectType)) { DO_VALIDATION;
           Log(e_Error, "Scene3D", "GetObjects", "targetObjectType " + int_to_str(targetObjectType) + " is not supported by this scene");
           return;
         }
@@ -59,7 +59,7 @@ namespace blunted {
 
       template <class T>
       void GetObjects(e_ObjectType targetObjectType, std::deque < boost::intrusive_ptr<T> > &gatherObjects, const vector_Planes &bounding) const {
-        if (!SupportedObjectType(targetObjectType)) {
+        if (!SupportedObjectType(targetObjectType)) { DO_VALIDATION;
           Log(e_Error, "Scene3D", "GetObjects", "targetObjectType " + int_to_str(targetObjectType) + " is not supported by this scene");
           return;
         }
