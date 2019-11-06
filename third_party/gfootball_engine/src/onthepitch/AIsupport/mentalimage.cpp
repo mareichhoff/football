@@ -48,19 +48,14 @@ MentalImage::MentalImage(Match* match)
 }
 
 void MentalImage::Mirror(bool team_0, bool team_1, bool ball) {
-  DO_VALIDATION;
   for (auto& i : players) {
-    DO_VALIDATION;
     if (i.player->GetTeamID() == 0 ? team_0 : team_1) {
-      DO_VALIDATION;
       i.Mirror();
     }
   }
   if (ball) {
-    DO_VALIDATION;
     ballPredictions_mirrored = !ballPredictions_mirrored;
     for (auto& i : ballPredictions) {
-      DO_VALIDATION;
       i.Mirror();
     }
   }

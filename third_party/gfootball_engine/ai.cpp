@@ -116,6 +116,7 @@ BOOST_PYTHON_MODULE(_gameplayfootball) {
       .def("get_info", &GameEnv_Python::get_info)
       .def("get_frame", &GameEnv_Python::get_frame_python)
       .def("perform_action", &GameEnv_Python::action)
+      .def("sticky_action_state", &GameEnv_Python::sticky_action_state)
       .def("step", &GameEnv_Python::step_python)
       .def("get_state", &GameEnv_Python::get_state_python)
       .def("set_state", &GameEnv_Python::set_state)
@@ -130,7 +131,7 @@ BOOST_PYTHON_MODULE(_gameplayfootball) {
       .def("setSession", &Tracker::setSession)
       .def("reset", &Tracker::reset)
       .def("disable", &Tracker::disable)
-      .def("failure", &Tracker::isFailure);
+      .def("setup", &Tracker::setup);
 
   class_<Vector3>("Vector3", init<float, float, float>())
      .def("__getitem__", &Vector3::GetEnvCoord)

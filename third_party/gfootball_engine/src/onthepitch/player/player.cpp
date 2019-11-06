@@ -76,7 +76,6 @@ Vector3 Player::GetPitchPosition() {
   DO_VALIDATION;
   Vector3 pos = GetPosition();
   if (!team->onOriginalSide()) {
-    DO_VALIDATION;
     pos.Mirror();
   }
   return pos;
@@ -317,7 +316,9 @@ void Player::Process() {
       if (match->GetActualTime_ms() % 1000 == 0) {
         DO_VALIDATION;
         positionHistoryPerSecond.push_back(GetPosition());
+        DO_VALIDATION;
       }
+      DO_VALIDATION;
       if (hasPossession) possessionDuration_ms += 10; else possessionDuration_ms = 0;
       if ((match->GetActualTime_ms() + GetStableID() * 10) % 100 == 0) {
         DO_VALIDATION;
@@ -352,7 +353,6 @@ void Player::PreparePutBuffers() {
   if (team->GetHumanGamerCount() == 0) buf_nameCaptionShowCondition = team->GetDesignatedTeamPossessionPlayer() == this;
   e_PlayerColor playerColor = team->GetPlayerColor(this);
   switch (playerColor) {
-    DO_VALIDATION;
     case e_PlayerColor_Green:
       buf_playerColor = Vector3(100, 255, 140);
       break;

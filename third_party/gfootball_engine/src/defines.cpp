@@ -143,11 +143,8 @@ bool EnvState::eos() {
 }
 
 void EnvState::process(void* ptr, int size) {
-  DO_VALIDATION;
   if (load) {
-    DO_VALIDATION;
     if (pos + size > state.size()) {
-      DO_VALIDATION;
       Log(blunted::e_FatalError, "EnvState", "state", "state is invalid");
     }
     memcpy(ptr, &state[pos], size);
@@ -157,12 +154,13 @@ void EnvState::process(void* ptr, int size) {
     memcpy(&state[pos], ptr, size);
     if (validate && !reference.empty() &&
         memcmp(&state[pos], &reference[pos], size)) {
-      DO_VALIDATION;
-      Log(blunted::e_FatalError, "EnvState", "state", "Reference mismatch");
+      failure = true;
+      if (crash) {
+        Log(blunted::e_FatalError, "EnvState", "state", "Reference mismatch");
+      }
     }
     pos += size;
     if (pos > 10000000) {
-      DO_VALIDATION;
       Log(blunted::e_FatalError, "EnvState", "state", "state is too big");
     }
   }

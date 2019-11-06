@@ -59,8 +59,8 @@ void GameTask::ProcessPhase() {
     match->FetchPutBuffers();
     match->Put();
     std::vector<Player*> players;
-    match->GetActiveTeamPlayers(0, players);
-    match->GetActiveTeamPlayers(1, players);
+    match->GetActiveTeamPlayers(match->FirstTeam(), players);
+    match->GetActiveTeamPlayers(match->SecondTeam(), players);
     std::vector<PlayerBase*> officials;
     match->GetOfficialPlayers(officials);
 

@@ -174,7 +174,7 @@ class RemoteFootballEnv(gym.Env):
   def _process_env_result(self, env_result):
     ob, rew, done, info = env_result
     if self._include_rendering and 'frame' in info:
-      cv2.imshow('GRF League', info['frame'][..., ::-1])
+      cv2.imshow('GRF League', info['frame'])
       cv2.waitKey(1)
     if done:
       self._game_id = None

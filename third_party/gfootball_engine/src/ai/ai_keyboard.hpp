@@ -27,9 +27,11 @@ class AIControlledKeyboard : public IHIDevice {
     virtual ~AIControlledKeyboard() { DO_VALIDATION;}
 
     virtual bool GetButton(e_ButtonFunction buttonFunction);
+    virtual void ResetNotSticky();
     virtual void SetButton(e_ButtonFunction buttonFunction, bool state);
     virtual bool GetPreviousButtonState(e_ButtonFunction buttonFunction);
     virtual Vector3 GetDirection();
+    virtual Vector3 GetOriginalDirection();
 
     // Methods for remote controlling.
     void SetDirection(const Vector3& new_direction);

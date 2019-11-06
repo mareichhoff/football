@@ -146,6 +146,12 @@ struct Quadrant {
   Vector3 position;
   e_Velocity velocity;
   radian angle;
+  void ProcessState(EnvState* state) {
+    state->process(id);
+    state->process(position);
+    state->process(&velocity, sizeof(velocity));
+    state->process(angle);
+  }
 };
 
 void FillNodeMap(boost::intrusive_ptr<Node> targetNode, NodeMap &nodeMap);
@@ -173,6 +179,8 @@ class AnimCollection {
     }
 
     int GetQuadrantID(Animation *animation, const Vector3 &movement, radian angle) const;
+
+    void ProcessState(EnvState* state);
 
   protected:
 

@@ -21,10 +21,15 @@
 class GameEnv;
 GameEnv* GetGame();
 
-void DoValidation();
-// Uncomment to enable validation
-// #define DO_VALIDATION DoValidation();
+void DoValidation(int line, const char* file);
+
+// Uncomment line below to enable validation.
+// #define FULL_VALIDATION 1
+#ifdef FULL_VALIDATION
+  #define DO_VALIDATION DoValidation(__LINE__, __FILE__);
+#else
 #define DO_VALIDATION ;
+#endif
 
 #include "ai/ai_keyboard.hpp"
 #include "blunted.hpp"
@@ -157,32 +162,57 @@ struct ScenarioConfig {
 
 class Tracker {
  public:
+  void setup(long start, long end, bool record_file_names,
+             bool extensive_check) {
+    this->start = start;
+    this->end = end;
+    this->record_file_names = record_file_names;
+    this->extensive_check = extensive_check;
+  }
   void reset();
   void setSession(int id);
   void disable();
   bool isFailure();
-  inline void verify(bool always = false) {
-    if (in_progress) return;
-    if (session != -1) {
-      int pos = ++sessions[session];
-      if (pos >= start && pos <= end && pos % step == 0) {
-        in_progress = true;
-        verify_internal(pos);
-        in_progress = false;
+  long position() {
+    return sessions[session];
+  }
+  int getSession() {
+    return session;
+  }
+  void setDisabled(bool disabled) {
+    this->disabled += disabled ? 1 : -1;
+  }
+  inline void verify(int line, const char* file) {
+    if (disabled > 0 || session == -1) return;
+    long pos = ++sessions[session];
+    if (pos >= start && pos <= end) {
+      disabled++;
+      if (extensive_check) {
+        verify_snapshot(pos);
       }
+      verify_lines(pos, line, file);
+      disabled--;
     }
   }
  private:
-  void verify_internal(int pos);
-  bool in_progress = false;
+  void verify_snapshot(long pos);
+  void verify_lines(long pos, int line, const char* file);
+  int disabled = 0;
   int session = -1;
-  int start = 0;
-  int end = 2000000000;
-  int step = 100000;
-  int failure_pos = -1;
-  std::map<int, std::string> stack_trace;
-  std::map<int, std::string> traces;
-  std::map<int, int> sessions;
+  // Tweak start and end to verify that line numbers match for
+  // each call in the verification range (2 bytes / call).
+  long start = 0LL;
+  long end = 1000000000LL;
+  // Should line check be extended with file name check (more memory needed).
+  bool record_file_names = false;
+  // Should extensive check be performed (300k / check).
+  bool extensive_check = false;
+
+  std::vector<std::string> stack_trace;
+  std::vector<std::string> traces;
+  std::map<int, long> sessions;
+  std::vector<short> code_lines;
+  std::vector<std::string> code_files;
 };
 
 enum GameState {

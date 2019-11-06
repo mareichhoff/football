@@ -48,11 +48,9 @@ Team::Team(int id, Match *match, TeamData *teamData, float aiDifficulty)
 Team::~Team() { DO_VALIDATION; }
 
 void Team::Mirror() {
-  DO_VALIDATION;
   side *= -1;
   mirrored = !mirrored;
   for (auto &p : players) {
-    DO_VALIDATION;
     p->Mirror();
   }
 }

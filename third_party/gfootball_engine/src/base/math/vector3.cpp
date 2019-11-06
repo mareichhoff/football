@@ -40,7 +40,6 @@ Vector3::Vector3(real xyz) {
 }
 
 Vector3::Vector3(real x, real y, real z) {
-  DO_VALIDATION;
   coords[0] = x;
   coords[1] = y;
   coords[2] = z;

@@ -1105,9 +1105,10 @@ void TeamAIController::PrepareSetPiece(e_GameMode setPiece, Team *other_team,
                 auto formation_players = team->GetAllPlayers();
                 auto players_to_position = team->GetAllPlayers();
                 if (match->GetMatchTime_ms() > 0 &&
+                    other_team->GetAllPlayers().size() ==
+                        team->GetAllPlayers().size() &&
                     (GetScenarioConfig().LeftTeamOwnsBall() ^
                      kickoffTakerTeamId == 0)) {
-                  DO_VALIDATION;
                   formation_players = other_team->GetAllPlayers();
                 }
                 assert(formation_players.size() == players_to_position.size());
@@ -1238,8 +1239,8 @@ void TeamAIController::UpdateTactics() {
 
   float possessionFactor = match->GetMatchData()->GetPossessionFactor_60seconds();
   float recentPossessionBias;
+  DO_VALIDATION;
   if (team->GetID() == 0) {
-    DO_VALIDATION;
     recentPossessionBias = 0.5 - possessionFactor * 0.5f;
   } else {
     recentPossessionBias = 0.5 + possessionFactor * 0.5f;

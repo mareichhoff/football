@@ -1800,7 +1800,8 @@ signed int Humanoid::GetBestCheatableAnimID(const DataSet &sortedDataSet, bool u
 
   float playerHeight = player->GetPlayerData()->GetHeight();
 
-  e_FunctionType functionType = StringToFunctionType(anims->GetAnim(*iter)->GetAnimTypeStr());
+  e_FunctionType functionType =
+      StringToFunctionType(anims->GetAnim(*iter)->GetAnimType());
 
   radian rotationSmuggle_ret_tmp = 0;
   radian predictedAngle = 0;

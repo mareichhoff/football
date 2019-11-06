@@ -194,7 +194,7 @@ bool Triangle::operator==(const Triangle &triangle) const {
     a = -normals[0].GetDotProduct(w0);
     b = normals[0].GetDotProduct(dir);
     if (fabs(b) < 0.000001f) {
-      DO_VALIDATION;             // ray is parallel to triangle plane
+      // ray is parallel to triangle plane
       if (a == 0)                // ray lies in triangle plane
         return false; // 2
       else return false;             // ray disjoint from plane

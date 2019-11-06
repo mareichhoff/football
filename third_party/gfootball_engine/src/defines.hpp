@@ -93,8 +93,14 @@ class EnvState {
   void process(Player*& value);
   void process(HumanController*& value);
   void process(Team*& value);
+  bool isFailure() {
+    return failure;
+  }
   void setValidate(bool validate) {
     this->validate = validate;
+  }
+  void setCrash(bool crash) {
+    this->crash = crash;
   }
   bool Load() { return load; }
   void process(void* ptr, int size);
@@ -110,12 +116,15 @@ class EnvState {
       state.resize(pos + size);
       memcpy(&state[pos], ptr, size);
       if (validate && !reference.empty() && (*(T*) &state[pos]) != (*(T*) &reference[pos])) {
-        T ref_value;
-        memcpy(&ref_value, &reference[pos], size);
-        std::cout << "Position:  " << pos << std::endl;
-        std::cout << "Value:     " << *ptr << std::endl;
-        std::cout << "Reference: " << ref_value << std::endl;
-        Log(blunted::e_FatalError, "EnvState", "state", "Reference mismatch");
+        failure = true;
+        if (crash) {
+          T ref_value;
+          memcpy(&ref_value, &reference[pos], size);
+          std::cout << "Position:  " << pos << std::endl;
+          std::cout << "Value:     " << *ptr << std::endl;
+          std::cout << "Reference: " << ref_value << std::endl;
+          Log(blunted::e_FatalError, "EnvState", "state", "Reference mismatch");
+        }
       }
       pos += size;
       if (pos > 10000000) {
@@ -131,6 +140,8 @@ class EnvState {
  protected:
   bool load = false;
   bool validate = true;
+  bool failure = false;
+  bool crash = true;
   std::vector<Player*> players;
   std::vector<blunted::Animation*> animations;
   std::vector<Team*> teams;

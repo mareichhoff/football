@@ -26,6 +26,7 @@
 #include "animationextensions/animationextension.hpp"
 
 #include "../utils/xmlloader.hpp"
+#include "../gamedefines.hpp"
 
 namespace blunted {
 
@@ -53,6 +54,9 @@ enum e_DefString {
   e_DefString_IncomingRetainState = 20,
   e_DefString_Size = 21
 };
+
+
+e_FunctionType StringToFunctionType(e_DefString fun);
 
   struct KeyFrame {
     Quaternion orientation;
@@ -383,12 +387,12 @@ enum e_DefString {
       }
       void SetVariable(const std::string &name, const std::string &value);
       e_DefString GetAnimType() const { return cache_AnimType; }
-      const std::string &GetAnimTypeStr() const { return cache_AnimType_str; }
 
       std::vector<NodeAnimation *> &GetNodeAnimations() { DO_VALIDATION;
         return nodeAnimations;
       }
       mutable float order_float = 0;
+      void ProcessState(EnvState* state);
 
     protected:
       std::vector<NodeAnimation*> nodeAnimations;
@@ -428,10 +432,7 @@ enum e_DefString {
       mutable Vector3 cache_incomingBodyDirection;
       mutable bool cache_outgoingBodyDirection_dirty = false;
       mutable Vector3 cache_outgoingBodyDirection;
-
       e_DefString cache_AnimType;
-      std::string cache_AnimType_str;
-
   };
 
 }

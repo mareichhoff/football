@@ -128,7 +128,7 @@ class Match {
 
 
     boost::intrusive_ptr<Camera> GetCamera() { DO_VALIDATION; return camera; }
-
+    void GetTeamState(SharedInfo *state, std::map<IHIDevice*, int>& controller_mapping, int team_id);
     void GetState(SharedInfo* state);
     void ProcessState(EnvState* state);
     void Process();

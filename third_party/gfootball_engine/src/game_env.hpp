@@ -37,6 +37,7 @@ struct GameEnv {
   screenshoot get_frame();
 
   // Executes the action inside the game.
+  bool sticky_action_state(int action, bool left_team, int player);
   void action(int action, bool left_team, int player);
   void reset(ScenarioConfig& game_config);
   std::string get_state();
@@ -55,7 +56,7 @@ struct GameEnv {
   Tracker default_tracker;
  public:
   Tracker* tracker;
-  GameContext* context;
+  GameContext* context = nullptr;
   GameState state = game_created;
   int waiting_for_game_count = 0;
 };

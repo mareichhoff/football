@@ -25,7 +25,6 @@
 #include <string>
 
 std::string now() {
-  DO_VALIDATION;
   auto now = std::chrono::system_clock::now();
   time_t tt;
   tt = std::chrono::system_clock::to_time_t(now);
@@ -36,11 +35,9 @@ namespace blunted {
 
 void Log(e_LogType logType, std::string className, std::string methodName,
          std::string message) {
-  DO_VALIDATION;
   std::string logTypeString;
 
   switch (logType) {
-    DO_VALIDATION;
     case e_Warning:
       logTypeString = "Warning";
       break;
@@ -58,7 +55,6 @@ void Log(e_LogType logType, std::string className, std::string methodName,
          className.c_str(), methodName.c_str(), message.c_str());
 
   if (logType == e_FatalError) {
-    DO_VALIDATION;
     exit(1);
   }
 }

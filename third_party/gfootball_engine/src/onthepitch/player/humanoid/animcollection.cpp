@@ -866,6 +866,23 @@ int AnimCollection::GetQuadrantID(Animation *animation, const Vector3 &movement,
   return quadrantID;
 }
 
+void AnimCollection::ProcessState(EnvState *state) {
+  int size = animations.size();
+  state->process(size);
+  animations.resize(size);
+  for (auto &a : animations) {
+    a->ProcessState(state);
+  }
+  size = quadrants.size();
+  state->process(size);
+  quadrants.resize(size);
+  for (auto &q : quadrants) {
+    q.ProcessState(state);
+  }
+  state->process(maxIncomingBallDirectionDeviation);
+  state->process(maxOutgoingBallDirectionDeviation);
+}
+
 // adds touches around main touch
 int AddExtraTouches(Animation *animation, boost::intrusive_ptr<Node> playerNode,
                     const std::list<boost::intrusive_ptr<Object> > &bodyParts,

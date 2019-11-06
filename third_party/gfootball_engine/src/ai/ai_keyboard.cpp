@@ -23,6 +23,16 @@ bool AIControlledKeyboard::GetButton(e_ButtonFunction buttonFunction) {
   return buttons_pressed_[buttonFunction];
 }
 
+void AIControlledKeyboard::ResetNotSticky() {
+  DO_VALIDATION;
+  buttons_pressed_[e_ButtonFunction_LongPass] = false;
+  buttons_pressed_[e_ButtonFunction_HighPass] = false;
+  buttons_pressed_[e_ButtonFunction_ShortPass] = false;
+  buttons_pressed_[e_ButtonFunction_Shot] = false;
+  buttons_pressed_[e_ButtonFunction_Sliding] = false;
+  buttons_pressed_[e_ButtonFunction_Switch] = false;
+}
+
 void AIControlledKeyboard::SetButton(e_ButtonFunction buttonFunction,
                                      bool state) {
   DO_VALIDATION;
@@ -40,8 +50,9 @@ Vector3 AIControlledKeyboard::GetDirection() {
   return direction_ * mirror;
 }
 
+Vector3 AIControlledKeyboard::GetOriginalDirection() { return direction_; }
+
 void AIControlledKeyboard::SetDirection(const Vector3& new_direction) {
-  DO_VALIDATION;
   direction_ = new_direction;
 }
 

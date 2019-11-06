@@ -36,16 +36,19 @@ using std::string;
 void GameEnv::do_step(int count, bool render) {
   DO_VALIDATION;
   while (!context->gameTask->GetMatch() || count--) {
-    DO_VALIDATION;
     context->menuTask->ProcessPhase();
+    DO_VALIDATION;
     context->gameTask->ProcessPhase();
+    DO_VALIDATION;
     if (render) {
       DO_VALIDATION;
       context->graphicsSystem->GetTask()->GetPhase();
+      DO_VALIDATION;
       context->graphicsSystem->GetTask()->ProcessPhase();
+      DO_VALIDATION;
     }
   }
-  tracker->verify(true);
+  DoValidation(__LINE__, __FILE__);
 }
 
 float Position::env_coord(int index) const {
@@ -149,13 +152,52 @@ screenshoot GameEnv::get_frame() {
   return GetGraphicsSystem()->GetScreen();
 }
 
+bool GameEnv::sticky_action_state(int action, bool left_team, int player) {
+  SetGame(this);
+  DO_VALIDATION;
+  int controller_id = player + (left_team ? 0 : 11);
+  auto controller =
+      static_cast<AIControlledKeyboard*>(GetControllers()[controller_id]);
+  switch (Action(action)) {
+    case game_left:
+      return controller->GetOriginalDirection() == Vector3(-1, 0, 0);
+    case game_top_left:
+      return controller->GetOriginalDirection() == Vector3(-1, 1, 0);
+    case game_top:
+      return controller->GetOriginalDirection() == Vector3(0, 1, 0);
+    case game_top_right:
+      return controller->GetOriginalDirection() == Vector3(1, 1, 0);
+    case game_right:
+      return controller->GetOriginalDirection() == Vector3(1, 0, 0);
+    case game_bottom_right:
+      return controller->GetOriginalDirection() == Vector3(1, -1, 0);
+    case game_bottom:
+      return controller->GetOriginalDirection() == Vector3(0, -1, 0);
+    case game_bottom_left:
+      return controller->GetOriginalDirection() == Vector3(-1, -1, 0);
+    case game_keeper_rush:
+      return controller->GetButton(e_ButtonFunction_KeeperRush);
+    case game_pressure:
+      return controller->GetButton(e_ButtonFunction_Pressure);
+    case game_team_pressure:
+      return controller->GetButton(e_ButtonFunction_TeamPressure);
+    case game_sprint:
+      return controller->GetButton(e_ButtonFunction_Sprint);
+    case game_dribble:
+      return controller->GetButton(e_ButtonFunction_Dribble);
+    default:
+      Log(e_FatalError, "football", "main", "invalid sticky action");
+  }
+  return false;
+}
+
 void GameEnv::action(int action, bool left_team, int player) {
   SetGame(this);
   DO_VALIDATION;
   int controller_id = player + (left_team ? 0 : 11);
   auto controller = static_cast<AIControlledKeyboard*>(GetControllers()[controller_id]);
+  tracker->setDisabled(true);
   switch (Action(action)) {
-    DO_VALIDATION;
     case game_idle:
       break;
     case game_left:
@@ -253,6 +295,7 @@ void GameEnv::action(int action, bool left_team, int player) {
       controller->SetButton(e_ButtonFunction_Dribble, false);
       break;
   }
+  tracker->setDisabled(false);
 }
 
 std::string GameEnv::get_state() {
@@ -311,18 +354,19 @@ void GameEnv::step() {
   if (context->gameTask->GetMatch()->IsInPlay()) {
     DO_VALIDATION;
     context->step++;
+    for (auto controller : GetControllers()) {
+      DO_VALIDATION;
+      controller->ResetNotSticky();
+    }
   }
 }
 
 void GameEnv::ProcessState(EnvState* state) {
   DO_VALIDATION;
   state->process(&this->state, sizeof(this->state));
-  state->process((void *)&context->step, sizeof(context->step));
-
-  state->process((void *)&context->rng, sizeof(context->rng));
-  state->process((void *)&context->rng_non_deterministic,
-                 sizeof(context->rng_non_deterministic));
+  state->process(waiting_for_game_count);
   GetGameTask()->GetMatch()->ProcessState(state);
+  context->ProcessState(state);
 }
 
 void GameEnv::reset(ScenarioConfig& game_config) {

@@ -36,10 +36,14 @@ namespace blunted {
 
     public:
       Vector3();
-      Vector3(const Vector3 &src) { DO_VALIDATION; coords[0] = src.coords[0]; coords[1] = src.coords[1]; coords[2] = src.coords[2]; } // gcc bug? this sometimes only sets the last element: memcpy(coords, src.coords, 3 * sizeof(real)); }
+      Vector3(const Vector3 &src) {
+        coords[0] = src.coords[0];
+        coords[1] = src.coords[1];
+        coords[2] = src.coords[2];
+      }
       Vector3(real xyz);
       Vector3(real x, real y, real z);
-      void Mirror() { DO_VALIDATION; coords[0] = -coords[0]; coords[1] = -coords[1]; }
+      void Mirror() { coords[0] = -coords[0]; coords[1] = -coords[1]; }
 
       void Set(real xyz);
       void Set(real x, real y, real z);

@@ -29,12 +29,10 @@ void RefereeBuffer::ProcessState(EnvState *state) {
   state->process(active);
   state->process((void*) &desiredSetPiece, sizeof(desiredSetPiece));
   if (GetScenarioConfig().reverse_team_processing) {
-    DO_VALIDATION;
     teamID = 1 - teamID;
   }
   state->process(teamID);
   if (GetScenarioConfig().reverse_team_processing) {
-    DO_VALIDATION;
     teamID = 1 - teamID;
   }
   state->process(setpiece_team);
@@ -42,12 +40,10 @@ void RefereeBuffer::ProcessState(EnvState *state) {
   state->process(prepareTime);
   state->process(startTime);
   if (GetScenarioConfig().reverse_team_processing) {
-    DO_VALIDATION;
     restartPos.Mirror();
   }
   state->process(restartPos);
   if (GetScenarioConfig().reverse_team_processing) {
-    DO_VALIDATION;
     restartPos.Mirror();
   }
   state->process(taker);
@@ -86,7 +82,6 @@ void Referee::Process() {
     Vector3 ballPos = match->GetBall()->Predict(0);
     // We process corner setup in not mirrored setup.
     if (GetScenarioConfig().reverse_team_processing) {
-      DO_VALIDATION;
       ballPos.Mirror();
     }
 

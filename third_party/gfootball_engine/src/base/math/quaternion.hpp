@@ -33,7 +33,7 @@ namespace blunted {
   class Quaternion {
 
     public:
-      inline Quaternion() { DO_VALIDATION;
+      inline Quaternion() {
         elements[0] = 0;
         elements[1] = 0;
         elements[2] = 0;

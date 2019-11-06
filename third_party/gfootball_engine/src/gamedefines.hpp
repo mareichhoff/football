@@ -337,7 +337,4 @@ struct ForceSpot {
 };
 
 void GetVertexColors(std::map<Vector3, Vector3> &colorCoords);
-
-e_FunctionType StringToFunctionType(const std::string &fun);
-
 #endif

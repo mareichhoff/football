@@ -22,6 +22,7 @@
 
 #include "../base/geometry/triangle.hpp"
 #include "../base/log.hpp"
+#include "../game_env.hpp"
 #include "../main.hpp"
 #include "../menu/pagefactory.hpp"
 #include "../menu/startmatch/loadingmatch.hpp"
@@ -261,24 +262,21 @@ Match::Match(MatchData *matchData, const std::vector<IHIDevice *> &controllers)
 Match::~Match() { DO_VALIDATION; }
 
 void Match::Mirror(bool team_0, bool team_1, bool ball) {
-  DO_VALIDATION;
+  GetGame()->tracker->setDisabled(true);
   if (team_0) {
-    DO_VALIDATION;
     teams[0]->Mirror();
   }
   if (team_1) {
-    DO_VALIDATION;
     teams[1]->Mirror();
   }
   if (ball) {
-    DO_VALIDATION;
     ball_mirrored = !ball_mirrored;
     this->ball->Mirror();
   }
   for (auto &i : mentalImages) {
-    DO_VALIDATION;
     i.Mirror(team_0, team_1, ball);
   }
+  GetGame()->tracker->setDisabled(false);
 }
 
 void Match::Exit() {
@@ -414,16 +412,17 @@ void Match::UpdateControllerSetup() {
   // add new
   const std::vector<SideSelection> controller = menuTask->GetControllerSetup();
   for (unsigned int i = 0; i < controller.size(); i++) {
+    e_PlayerColor color = e_PlayerColor(i % (e_PlayerColor_Default + 1));
     DO_VALIDATION;
     float mirror = 1.0;
     if (controller[i].side == -1) {
       DO_VALIDATION;
       teams[0]->AddHumanGamer(controllers.at(controller[i].controllerID),
-                              (e_PlayerColor)i);
+                              color);
     } else if (controller[i].side == 1) {
       DO_VALIDATION;
       teams[1]->AddHumanGamer(controllers.at(controller[i].controllerID),
-                              (e_PlayerColor)i);
+                              color);
       if (teams[1]->GetDynamicSide() == -1) {
         DO_VALIDATION;
         mirror = -1.0;
@@ -750,6 +749,55 @@ void Match::ProcessState(EnvState* state) {
   Mirror(team_0_mirror, team_1_mirror, ball_mirror);
 }
 
+void Match::GetTeamState(SharedInfo *state,
+                         std::map<IHIDevice *, int> &controller_mapping,
+                         int team_id) {
+  DO_VALIDATION;
+  std::vector<PlayerInfo> &team =
+      team_id == 0 ? state->left_team : state->right_team;
+  team.clear();
+  std::vector<Player *> players;
+  GetAllTeamPlayers(team_id, players);
+  for (auto player : players) {
+    DO_VALIDATION;
+    auto controller = player->GetExternalController();
+    if (controller) {
+      DO_VALIDATION;
+      if (team_id == 0) {
+        state->left_controllers[controller_mapping[controller->GetHIDevice()]]
+            .controlled_player = team.size();
+      } else {
+        state->right_controllers[controller_mapping[controller->GetHIDevice()]]
+            .controlled_player = team.size();
+      }
+    }
+    if (player->CastHumanoid() != NULL) {
+      DO_VALIDATION;
+      auto position = player->GetPosition();
+      auto movement = player->GetMovement();
+      if (team_id == 1) {
+        position.Mirror();
+        movement.Mirror();
+      }
+      PlayerInfo info;
+      info.player_position = position.coords;
+      info.player_direction =
+          (movement / GetGameConfig().physics_steps_per_frame).coords;
+      info.tired_factor = 1 - player->GetFatigueFactorInv();
+      info.has_card = player->HasCards();
+      info.is_active = player->IsActive();
+      info.role = player->GetFormationEntry().role;
+      if (player->HasPossession() && GetLastTouchTeamID() != -1 &&
+          GetLastTouchTeam()->GetLastTouchPlayer() == player) {
+        DO_VALIDATION;
+        state->ball_owned_player = team.size();
+        state->ball_owned_team = GetLastTouchTeamID();
+      }
+      team.push_back(info);
+    }
+  }
+}
+
 void Match::GetState(SharedInfo *state) {
   DO_VALIDATION;
   state->ball_position = ball->GetAveragePosition(5).coords;
@@ -778,55 +826,8 @@ void Match::GetState(SharedInfo *state) {
       controller_mapping[controllers[x + MAX_PLAYERS]] = x;
     }
   }
-
-  for (int team_id = 0; team_id < 2; ++team_id) {
-    DO_VALIDATION;
-    std::vector<PlayerInfo>& team = team_id == 0
-        ? state->left_team : state->right_team;
-    team.clear();
-    std::vector<Player*> players;
-    GetAllTeamPlayers(team_id, players);
-    for (auto player : players) {
-      DO_VALIDATION;
-      auto controller = player->GetExternalController();
-      if (controller) {
-        DO_VALIDATION;
-        if (team_id == 0) {
-          DO_VALIDATION;
-          state->left_controllers[controller_mapping[
-              controller->GetHIDevice()]].controlled_player = team.size();
-        } else {
-          state->right_controllers[controller_mapping[
-              controller->GetHIDevice()]].controlled_player = team.size();
-        }
-      }
-      if (player->CastHumanoid() != NULL) {
-        DO_VALIDATION;
-        auto position = player->GetPosition();
-        auto movement = player->GetMovement();
-        if (team_id == 1) {
-          DO_VALIDATION;
-          position.Mirror();
-          movement.Mirror();
-        }
-        PlayerInfo info;
-        info.player_position = position.coords;
-        info.player_direction =
-            (movement / GetGameConfig().physics_steps_per_frame).coords;
-        info.tired_factor = 1 - player->GetFatigueFactorInv();
-        info.has_card = player->HasCards();
-        info.is_active = player->IsActive();
-        info.role = player->GetFormationEntry().role;
-        if (player->HasPossession() && GetLastTouchTeamID() != -1 &&
-            GetLastTouchTeam()->GetLastTouchPlayer() == player) {
-          DO_VALIDATION;
-          state->ball_owned_player = team.size();
-          state->ball_owned_team = GetLastTouchTeamID();
-        }
-        team.push_back(info);
-      }
-    }
-  }
+  GetTeamState(state, controller_mapping, first_team);
+  GetTeamState(state, controller_mapping, second_team);
 }
 
 // THE SPICE
@@ -872,7 +873,6 @@ void Match::Process() {
     teams[second_team]->UpdateSwitch();
 
     if (first_team == 0) {
-      DO_VALIDATION;
       Mirror(false, true, false);
     } else {
       Mirror(true, false, true);
@@ -881,7 +881,6 @@ void Match::Process() {
     Mirror(true, true, true);
     teams[second_team]->Process();
     if (first_team == 0) {
-      DO_VALIDATION;
       Mirror(true, false, true);
     } else {
       Mirror(false, true, false);
@@ -892,7 +891,6 @@ void Match::Process() {
     Mirror(reverse, !reverse, reverse);
 
     if (first_team == 0) {
-      DO_VALIDATION;
       Mirror(false, true, false);
     } else {
       Mirror(true, false, true);
@@ -901,7 +899,6 @@ void Match::Process() {
     Mirror(true, true, true);
     teams[second_team]->UpdatePossessionStats();
     if (first_team == 0) {
-      DO_VALIDATION;
       Mirror(true, false, true);
     } else {
       Mirror(false, true, false);
@@ -941,35 +938,37 @@ void Match::Process() {
     actualTime_ms += 10;
     if (IsGoalScored()) goalScoredTimer += 10; else goalScoredTimer = 0;
 
-    if (IsInPlay() && !IsInSetPiece()) GetMatchData()->AddPossessionTime_10ms(teams[0] == designatedPossessionPlayer->GetTeam() ? 0 : 1);
-
+    if (IsInPlay() && !IsInSetPiece()) {
+      DO_VALIDATION;
+      GetMatchData()->AddPossessionTime_10ms(
+          teams[0] == designatedPossessionPlayer->GetTeam() ? 0 : 1);
+    }
 
     // check for goals
-
-    bool t1goal = CheckForGoal(teams[0]->GetDynamicSide(), previousBallPos);
-    bool t2goal = CheckForGoal(teams[1]->GetDynamicSide(), previousBallPos);
-    if (t1goal) ballIsInGoal = true;
-    if (t2goal) ballIsInGoal = true;
+    bool first_team_goal = false;
+    bool second_team_goal = false;
+    if (IsInPlay()) {
+      first_team_goal =
+          CheckForGoal(teams[first_team]->GetDynamicSide(), previousBallPos);
+      second_team_goal =
+          CheckForGoal(teams[second_team]->GetDynamicSide(), previousBallPos);
+    }
+    bool goal = first_team_goal | second_team_goal;
+    ballIsInGoal |= goal;
     Mirror(rev, !rev, rev);
     if (IsInPlay()) {
       DO_VALIDATION;
-      if (t1goal) {
+      if (goal) {
+        int team = first_team_goal ? second_team : first_team;
         DO_VALIDATION;
-        matchData->SetGoalCount(teams[1]->GetID(), matchData->GetGoalCount(1) + 1);
-        scoreboard->SetGoalCount(1, matchData->GetGoalCount(1));
+        matchData->SetGoalCount(teams[team]->GetID(),
+                                matchData->GetGoalCount(team) + 1);
+        scoreboard->SetGoalCount(team, matchData->GetGoalCount(second_team));
         goalScored = true;
-        lastGoalTeam = teams[1];
-        teams[1]->GetController()->UpdateTactics();
+        lastGoalTeam = teams[team];
+        teams[team]->GetController()->UpdateTactics();
       }
-      if (t2goal) {
-        DO_VALIDATION;
-        matchData->SetGoalCount(teams[0]->GetID(), matchData->GetGoalCount(0) + 1);
-        scoreboard->SetGoalCount(0, matchData->GetGoalCount(0));
-        goalScored = true;
-        lastGoalTeam = teams[0];
-        teams[0]->GetController()->UpdateTactics();
-      }
-      if (t1goal || t2goal) {
+      if (first_team_goal || second_team_goal) {
         DO_VALIDATION;
 
         // find out who scored
@@ -998,7 +997,6 @@ void Match::Process() {
         }
       }
     }
-
     // average possession side
 
     if (IsInPlay()) {
@@ -1191,16 +1189,22 @@ bool Match::CheckForGoal(signed int side, const Vector3 &previousBallPos) {
   goal2.SetNormals(Vector3(-side, 0, 0));
 
   Vector3 intersectVec;
-  bool intersect = goal1.IntersectsLine(line, intersectVec);
-  if (!intersect) {
+  GetGame()->tracker->setDisabled(true);
+  bool intersect1 = goal1.IntersectsLine(line, intersectVec);
+  bool intersect2 = goal2.IntersectsLine(line, intersectVec);
+  GetGame()->tracker->setDisabled(false);
+  // extra check: ball could have gone 'in' via the side netting, if line begin
+  // == inside pitch, but outside of post, and line end == in goal. disallow!
+  if (fabs(previousBallPos.coords[1]) > 3.7 &&
+      fabs(previousBallPos.coords[0]) > pitchHalfW - lineHalfW - 0.11) {
     DO_VALIDATION;
-    intersect = goal2.IntersectsLine(line, intersectVec);
+    return false;
   }
-
-  // extra check: ball could have gone 'in' via the side netting, if line begin == inside pitch, but outside of post, and line end == in goal. disallow!
-  if (fabs(previousBallPos.coords[1]) > 3.7 && fabs(previousBallPos.coords[0]) > pitchHalfW - lineHalfW - 0.11) return false;
-
-  if (intersect) return true; else return false;
+  if (intersect1 || intersect2) {
+    DO_VALIDATION;
+    return true;
+  }
+  return false;
 }
 
 void Match::CalculateBestPossessionTeamID() {

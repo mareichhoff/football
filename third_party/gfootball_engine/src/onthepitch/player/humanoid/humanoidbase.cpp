@@ -205,12 +205,10 @@ HumanoidBase::~HumanoidBase() {
 }
 
 void HumanoidBase::Mirror() {
-  DO_VALIDATION;
   // fullbodyNode - mirror for ball collision and render.
   humanoidNode->SetPosition(humanoidNode->GetPosition() * Vector3(-1, -1, 1));
   Quaternion rotation = humanoidNode->GetRotation();
   if (!mirrored) {
-    DO_VALIDATION;
     humanoidNode->SetRotation(Quaternion(rotation.elements[1], rotation.elements[0], rotation.elements[3], -rotation.elements[2]));
   } else {
     humanoidNode->SetRotation(Quaternion(rotation.elements[1], rotation.elements[0], -rotation.elements[3], rotation.elements[2]));

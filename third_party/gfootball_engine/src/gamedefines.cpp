@@ -122,24 +122,6 @@ void GetVertexColors(std::map<Vector3, Vector3> &colorCoords) {
   }
 }
 
-e_FunctionType StringToFunctionType(const std::string &fun) {
-  DO_VALIDATION;
-  if (fun.compare("movement") == 0) return e_FunctionType_Movement;
-  if (fun.compare("ballcontrol") == 0) return e_FunctionType_BallControl;
-  if (fun.compare("trap") == 0) return e_FunctionType_Trap;
-  if (fun.compare("shortpass") == 0) return e_FunctionType_ShortPass;
-  if (fun.compare("longpass") == 0) return e_FunctionType_LongPass;
-  if (fun.compare("highpass") == 0) return e_FunctionType_HighPass;
-  if (fun.compare("shot") == 0) return e_FunctionType_Shot;
-  if (fun.compare("deflect") == 0) return e_FunctionType_Deflect;
-  if (fun.compare("catch") == 0) return e_FunctionType_Catch;
-  if (fun.compare("interfere") == 0) return e_FunctionType_Interfere;
-  if (fun.compare("trip") == 0) return e_FunctionType_Trip;
-  if (fun.compare("sliding") == 0) return e_FunctionType_Sliding;
-  if (fun.compare("special") == 0) return e_FunctionType_Special;
-  return e_FunctionType_None;
-}
-
 e_PlayerRole GetRoleFromString(const std::string &roleString) {
   DO_VALIDATION;
   if (roleString.compare("GK") == 0) return e_PlayerRole_GK;

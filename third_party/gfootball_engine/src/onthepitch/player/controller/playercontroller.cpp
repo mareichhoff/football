@@ -67,8 +67,17 @@ int PlayerController::GetReactionTime_ms() {
 
 float PlayerController::GetLastSwitchBias() {
   DO_VALIDATION;
-  if (!match->IsInPlay() || match->IsInSetPiece()) lastSwitchTime_ms = -10000;
-  if (lastSwitchTimeDuration_ms > 0) return 1.0f - clamp((match->GetActualTime_ms() - lastSwitchTime_ms) / (float)lastSwitchTimeDuration_ms, 0.0f, 1.0f);
+  if (!match->IsInPlay() || match->IsInSetPiece()) {
+    DO_VALIDATION;
+    lastSwitchTime_ms = -10000;
+  }
+  if (lastSwitchTimeDuration_ms > 0) {
+    DO_VALIDATION;
+    return 1.0f - clamp((match->GetActualTime_ms() - lastSwitchTime_ms) /
+                            (float)lastSwitchTimeDuration_ms,
+                        0.0f, 1.0f);
+  }
+  DO_VALIDATION;
   return 0.0f;
 }
 

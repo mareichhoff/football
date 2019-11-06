@@ -27,6 +27,24 @@
 
 namespace blunted {
 
+e_FunctionType StringToFunctionType(e_DefString fun) {
+  DO_VALIDATION;
+  if (fun == e_DefString_Movement) return e_FunctionType_Movement;
+  if (fun == e_DefString_BallControl) return e_FunctionType_BallControl;
+  if (fun == e_DefString_Trap) return e_FunctionType_Trap;
+  if (fun == e_DefString_ShortPass) return e_FunctionType_ShortPass;
+  if (fun == e_DefString_LongPass) return e_FunctionType_LongPass;
+  if (fun == e_DefString_HighPass) return e_FunctionType_HighPass;
+  if (fun == e_DefString_Shot) return e_FunctionType_Shot;
+  if (fun == e_DefString_Deflect) return e_FunctionType_Deflect;
+  if (fun == e_DefString_Catch) return e_FunctionType_Catch;
+  if (fun == e_DefString_Interfere) return e_FunctionType_Interfere;
+  if (fun == e_DefString_Trip) return e_FunctionType_Trip;
+  if (fun == e_DefString_Sliding) return e_FunctionType_Sliding;
+  if (fun == e_DefString_Special) return e_FunctionType_Special;
+  return e_FunctionType_None;
+}
+
 
 radian FixAngle(radian angle, bool modulateIntoRange = true) {
   DO_VALIDATION;
@@ -688,6 +706,7 @@ void Animation::DirtyCache() {
       cache_translation.coords[2] = 0;
       cache_translation_dirty = false;
     }
+    DO_VALIDATION;
     return cache_translation;
   }
 
@@ -707,6 +726,7 @@ void Animation::DirtyCache() {
       }
       cache_incomingMovement_dirty = false;
     }
+    DO_VALIDATION;
     return cache_incomingMovement;
   }
 
@@ -1126,9 +1146,7 @@ void Animation::DirtyCache() {
     mapping["catch"] = e_DefString_Catch;
     mapping["outgoing_retain_state"] = e_DefString_OutgoingRetainState;
     mapping["incoming_retain_state"] = e_DefString_IncomingRetainState;
-    cache_AnimType_str = variableCache.get("type");
-    cache_AnimType = mapping[cache_AnimType_str];
-
+    cache_AnimType = mapping[variableCache.get("type")];
     ConvertToStartFacingForwardIfIdle();
   }
 
@@ -1199,6 +1217,72 @@ void Animation::DirtyCache() {
 
   std::string Animation::GetName() const {
     return name;
+  }
+
+  void Animation::ProcessState(EnvState *state) {
+    //    state->process(order_float);
+    int size = nodeAnimations.size();
+    state->process(size);
+    assert(size == nodeAnimations.size());
+    // nodeAnimations.resize(size);
+    // for (auto& n : nodeAnimations) {
+    // }
+    state->process(frameCount);
+    state->process(name);
+
+    // std::map < std::string, boost::shared_ptr<AnimationExtension> >
+    // extensions;
+    // boost::shared_ptr<XMLTree> customData;
+    // VariableCache variableCache;
+    state->process(&currentFoot, sizeof(currentFoot));
+    state->process(cache_translation_dirty);
+    if (!cache_translation_dirty) {
+      state->process(cache_translation);
+    }
+    state->process(cache_incomingMovement_dirty);
+    if (!cache_incomingMovement_dirty) {
+      state->process(cache_incomingMovement);
+    }
+    state->process(cache_incomingVelocity_dirty);
+    if (!cache_incomingVelocity_dirty) {
+      state->process(cache_incomingVelocity);
+    }
+    state->process(cache_outgoingDirection_dirty);
+    if (!cache_outgoingDirection_dirty) {
+      state->process(cache_outgoingDirection);
+    }
+    state->process(cache_outgoingMovement_dirty);
+    if (!cache_outgoingMovement_dirty) {
+      state->process(cache_outgoingMovement);
+    }
+    if (!cache_rangedOutgoingMovement_dirty) {
+      state->process(cache_rangedOutgoingMovement);
+    }
+    state->process(cache_outgoingVelocity_dirty);
+    if (!cache_outgoingVelocity_dirty) {
+      state->process(cache_outgoingVelocity);
+    }
+    state->process(cache_angle_dirty);
+    if (!cache_angle_dirty) {
+      state->process(cache_angle);
+    }
+    state->process(cache_incomingBodyAngle_dirty);
+    if (!cache_incomingBodyAngle_dirty) {
+      state->process(cache_incomingBodyAngle);
+    }
+    state->process(cache_outgoingBodyAngle_dirty);
+    if (!cache_outgoingBodyAngle_dirty) {
+      state->process(cache_outgoingBodyAngle);
+    }
+    state->process(cache_incomingBodyDirection_dirty);
+    if (!cache_incomingBodyDirection_dirty) {
+      state->process(cache_incomingBodyDirection);
+    }
+    state->process(cache_outgoingBodyDirection_dirty);
+    if (!cache_outgoingBodyDirection_dirty) {
+      state->process(cache_outgoingBodyDirection);
+    }
+    state->process(&cache_AnimType, sizeof(e_DefString));
   }
 
   void Animation::AddExtension(

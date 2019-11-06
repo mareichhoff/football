@@ -413,6 +413,7 @@ TimeNeeded AI_GetTimeNeededForDistance_ms(const Vector3 &playerPos,
     currentPos += currentMovement.GetNormalized() * ffo;
     currentPos += currentMovement * 0.01f;
   } else {
+    DO_VALIDATION;
     currentPos += (targetPos - playerPos).GetNormalized(0) * ffo;
   }
 
@@ -456,6 +457,7 @@ TimeNeeded AI_GetTimeNeededForDistance_ms(const Vector3 &playerPos,
       break;
 
     } else {
+      DO_VALIDATION;
       // manual copy: this function is called a lot, so if we use the Vector3::operator*, it's creating a lot of temp vars.
       // currentMovement = playerMovement * (1.0f - bias);
       currentMovement.coords[0] = playerMovement.coords[0] * (1.0f - bias);
@@ -668,9 +670,16 @@ unsigned int AI_GetToBallMovement(Match *match, const MentalImage *mentalImage,
       */
       // if (dot >= 0.0f) forced = true; // force <= perpendicular
       float justInTimeFactor = clamp(player->GetTimeNeededToGetToBall_ms() / (float)time_ms, 0.0f, 1.0f); // lower == more time to spare
-      if (justInTimeFactor < 0.35f) forced = true; // takes too long relative to how long it could take
+      DO_VALIDATION;
+      if (justInTimeFactor < 0.35f) {
+        DO_VALIDATION;
+        forced = true;  // takes too long relative to how long it could take
+      }
       //LANCHANGE if (dot > 0.45f) forced = true; // too shallow angle, just go to ball already
-      if (dot > 0.0f) forced = true; // too shallow angle, just go to ball already
+      if (dot > 0.0f) {
+        DO_VALIDATION;
+        forced = true;  // too shallow angle, just go to ball already
+      }
       //if (fabs(angle) <= 0.21f * pi) forced = true;
 
 

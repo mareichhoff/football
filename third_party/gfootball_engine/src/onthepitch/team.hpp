@@ -60,7 +60,7 @@ class Team {
     FormationEntry GetFormationEntry(void* player);
     void SetFormationEntry(Player* player, FormationEntry entry);
     float GetAiDifficulty() const { return aiDifficulty; }
-    const std::vector<Player *> &GetAllPlayers() { DO_VALIDATION; return players; }
+    const std::vector<Player *> &GetAllPlayers() { return players; }
     void GetAllPlayers(std::vector<Player*> &allPlayers) { DO_VALIDATION;
       allPlayers.insert(allPlayers.end(), players.begin(), players.end());
     }

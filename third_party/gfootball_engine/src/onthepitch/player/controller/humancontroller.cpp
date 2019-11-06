@@ -394,12 +394,14 @@ void HumanController::Process() {
   bool enableSteadyDirectionSystem = false;
 
   PlayerController::Process();
+  DO_VALIDATION;
 
   Vector3 currentDirection;
   float dud = 0.0f;
   _GetHidInput(currentDirection, dud);
   radian angle = fabs(currentDirection.GetAngle2D(previousDirection));
   previousDirection = currentDirection;
+  DO_VALIDATION;
 
   // only set steadydirection if angle is small (= human probably reaching his intended direction)
   // or very large (= maybe the stick has been in deadzone space; humans can't move this fast)
@@ -413,6 +415,7 @@ void HumanController::Process() {
       lastSteadyDirectionSnapshotTime_ms = match->GetActualTime_ms();
     }
   } else {
+    DO_VALIDATION;
     steadyDirection = currentDirection;
     lastSteadyDirectionSnapshotTime_ms = match->GetActualTime_ms();
   }
@@ -615,6 +618,7 @@ void HumanController::_GetHidInput(Vector3 &rawInputDirection,
     rawInputDirection = CastPlayer()->GetDirectionVec();
     rawInputVelocityFloat = idleVelocity;
   } else {
+    DO_VALIDATION;
     if (hid->GetButton(e_ButtonFunction_Sprint)) rawInputVelocityFloat = sprintVelocity;
     else if (hid->GetButton(e_ButtonFunction_Dribble)) rawInputVelocityFloat = dribbleVelocity;
     else if (hid->GetButton(e_ButtonFunction_Switch) && match->GetDesignatedPossessionPlayer() == CastPlayer()) rawInputVelocityFloat = idleVelocity;

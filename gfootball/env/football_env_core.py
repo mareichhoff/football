@@ -21,8 +21,11 @@ from __future__ import print_function
 
 import copy
 
-import gfootball_engine as libgame
-from gfootball_engine import GameState
+try:
+  import gfootball_engine as libgame
+  from gfootball_engine import GameState
+except ImportError:
+  print ('Cannot import gfootball_engine. Package was not installed properly.')
 from gfootball.env import config as cfg
 from gfootball.env import constants
 from gfootball.env import football_action_set
@@ -45,6 +48,7 @@ class FootballEnvCore(object):
   def __init__(self, config):
     self._env = None
     self._config = config
+    self._sticky_actions = football_action_set.get_sticky_actions(config)
 
   def reset(self, trace):
     """Reset environment for a new episode using a given config."""
@@ -52,7 +56,6 @@ class FootballEnvCore(object):
     global _unused_rendering_engine
     assert (self._env == None or self._env.state == GameState.game_running or
             self._env.state == GameState.game_done)
-    self._waiting_for_game_count = 0
     self._steps_time = 0
     self._step = 0
     self._trace = trace
@@ -74,14 +77,6 @@ class FootballEnvCore(object):
           self._rendering_in_use()
         self._env = libgame.GameEnv()
         self._env.start_game(self._config.GameConfig())
-    self._left_controllers = []
-    self._right_controllers = []
-    for _ in range(self._scenario_cfg.left_agents):
-      controller = football_action_set.StickyWrapper(self._config, self)
-      self._left_controllers.append(controller)
-    for _ in range(self._scenario_cfg.right_agents):
-      controller = football_action_set.StickyWrapper(self._config, self)
-      self._right_controllers.append(controller)
     self._env.reset(self._scenario_cfg)
     while not self._retrieve_observation():
       self._env.step()
@@ -113,8 +108,8 @@ class FootballEnvCore(object):
   def step(self, action):
     assert self._env.state == GameState.game_running
     # If agent 'holds' the game for too long, just start it.
-    if self._waiting_for_game_count > 20:
-      self._waiting_for_game_count = 0
+    if self._env.waiting_for_game_count > 20:
+      self._env.waiting_for_game_count = 0
       action = [football_action_set.action_short_pass] * (
           self._scenario_cfg.left_agents + self._scenario_cfg.right_agents)
 
@@ -122,23 +117,17 @@ class FootballEnvCore(object):
         self._scenario_cfg.left_agents + self._scenario_cfg.right_agents)
     debug = {}
     debug['action'] = action
-    self._left_team = True
-    self._player_id = 0
     action_index = 0
-    for _ in range(self._scenario_cfg.left_agents):
+    for i in range(self._scenario_cfg.left_agents):
       player_action = action[action_index]
       action_index += 1
       assert isinstance(player_action, football_action_set.CoreAction)
-      self._left_controllers[self._player_id].perform_action(player_action)
-      self._player_id += 1
-    self._player_id = 0
-    self._left_team = False
-    for _ in range(self._scenario_cfg.right_agents):
+      self._env.perform_action(player_action._backend_action, True, i)
+    for i in range(self._scenario_cfg.right_agents):
       player_action = action[action_index]
       action_index += 1
       assert isinstance(player_action, football_action_set.CoreAction)
-      self._right_controllers[self._player_id].perform_action(player_action)
-      self._player_id += 1
+      self._env.perform_action(player_action._backend_action, False, i)
     while True:
       enter_time = timeit.default_timer()
       self._env.step()
@@ -193,9 +182,9 @@ class FootballEnvCore(object):
     debug['reward'] = reward
     if self._observation['game_mode'] != int(
         libgame.e_GameMode.e_GameMode_Normal):
-      self._waiting_for_game_count += 1
+      self._env.waiting_for_game_count += 1
     else:
-      self._waiting_for_game_count = 0
+      self._env.waiting_for_game_count = 0
     if self._step >= self._config['game_duration']:
       self._env.state = GameState.game_done
 
@@ -237,27 +226,15 @@ class FootballEnvCore(object):
     result['right_agent_sticky_actions'] = []
     result['right_agent_controlled_player'] = []
     for i in range(self._scenario_cfg.left_agents):
-      if i >= len(info.left_controllers):
-        result['left_agent_controlled_player'].append(-1)
-        result['left_agent_sticky_actions'].append(
-            np.zeros((len(football_action_set.get_sticky_actions(
-                self._config))), dtype=np.uint8))
-        continue
       result['left_agent_controlled_player'].append(
           info.left_controllers[i].controlled_player)
-      result['left_agent_sticky_actions'].append(np.array(
-          self._left_controllers[i].active_sticky_actions(), dtype=np.uint8))
+      result['left_agent_sticky_actions'].append(
+          np.array(self.sticky_actions_state(True, i), dtype=np.uint8))
     for i in range(self._scenario_cfg.right_agents):
-      if i >= len(info.right_controllers):
-        result['right_agent_controlled_player'].append(-1)
-        result['right_agent_sticky_actions'].append(
-            np.zeros((len(football_action_set.get_sticky_actions(
-                self._config))), dtype=np.uint8))
-        continue
       result['right_agent_controlled_player'].append(
           info.right_controllers[i].controlled_player)
-      result['right_agent_sticky_actions'].append(np.array(
-          self._right_controllers[i].active_sticky_actions(), dtype=np.uint8))
+      result['right_agent_sticky_actions'].append(
+          np.array(self.sticky_actions_state(False, i), dtype=np.uint8))
     result['game_mode'] = int(info.game_mode)
     result['score'] = [info.left_goals, info.right_goals]
     result['ball_owned_team'] = info.ball_owned_team
@@ -310,9 +287,13 @@ class FootballEnvCore(object):
             self._env.state == GameState.game_done)
     return copy.deepcopy(self._observation)
 
-  def perform_action(self, action):
-    # Left team player 0 action...
-    self._env.perform_action(action, self._left_team, self._player_id)
+  def sticky_actions_state(self, left_team, player_id):
+    result = []
+    for a in self._sticky_actions:
+      result.append(
+          self._env.sticky_action_state(a._backend_action, left_team,
+                                        player_id))
+    return np.uint8(result)
 
   def get_state(self):
     assert (self._env.state == GameState.game_running or

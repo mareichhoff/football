@@ -55,14 +55,11 @@ Ball::~Ball() {
 }
 
 void Ball::Mirror() {
-  DO_VALIDATION;
   momentum.Mirror();
   for (auto &a : predictions) {
-    DO_VALIDATION;
     a.Mirror();
   }
   for (auto &a : ballPosHistory) {
-    DO_VALIDATION;
     a.Mirror();
   }
   positionBuffer.Mirror();

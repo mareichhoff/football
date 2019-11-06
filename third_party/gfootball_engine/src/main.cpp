@@ -45,10 +45,10 @@ using namespace blunted;
 
 thread_local GameEnv* game;
 
-void DoValidation() {
+void DoValidation(int line, const char* file) {
   auto game = GetGame();
   if (game) {
-    game->tracker->verify();
+    game->tracker->verify(line, file);
   }
 }
 
@@ -194,57 +194,78 @@ void Tracker::disable() { session = -1; }
 
 void Tracker::reset() {
   session = -1;
-  failure_pos = -1;
   sessions.clear();
-  std::cout << "Tracker: validating [" << start << "," << end
-            << "], step: " << step << std::endl;
+  stack_trace.clear();
+  traces.clear();
+  sessions.clear();
+  code_lines.clear();
+  code_files.clear();
 }
 
-bool Tracker::isFailure() { return failure_pos > -1; }
-
-void Tracker::verify_internal(int pos) {
+void Tracker::verify_snapshot(long pos) {
+  long index = pos - start;
   if (!game->context->gameTask->GetMatch()) return;
 
   string stack;
-  if (!stack_trace.count(pos)) {
+  if (stack_trace.size() == index) {
     if (traces.size() > 100000) {
       Log(blunted::e_FatalError, "Too many traces", "", "");
     }
     EnvState reader("");
+    reader.setCrash(false);
     GetGame()->ProcessState(&reader);
-    stack_trace[pos] = stack;
-    traces[pos] = reader.GetState();
-  } else if (failure_pos == -1 || failure_pos > pos) {
-    bool error = false;
-    if (stack != stack_trace[pos]) {
-      if (step == 1) {
-        Log(blunted::e_FatalError, "Stack trace mismatch", stack,
-            stack_trace[pos]);
-      } else {
-        error = true;
-      }
-    }
-    if (step == 1) {
-      EnvState reader("", traces[pos]);
-      GetGame()->ProcessState(&reader);
-    } else {
+    if (reader.isFailure()) {
+      std::cout << "State validation mismatch at position " << pos << std::endl;
       EnvState reader("");
       GetGame()->ProcessState(&reader);
-      if (reader.GetState() != traces[pos]) {
-        error = true;
-      }
     }
-    if (error) {
-      std::cout << "Error found at position: " << pos << std::endl;
-      failure_pos = pos;
-      start = std::max(pos - 2 * step, 0);
-      end = pos;
-      step = std::max(1, (end - start) / 1000);
+    stack_trace.push_back(stack);
+    traces.push_back(reader.GetState());
+  } else if (stack_trace.size() < index) {
+    Log(blunted::e_FatalError, "Missing calls", "", "");
+  } else {
+    EnvState reader("", traces[index]);
+    GetGame()->ProcessState(&reader);
+    if (stack != stack_trace[index]) {
+      std::cout << "Stack trace mismatch at position " << pos << std::endl;
+      Log(blunted::e_FatalError, "Stack trace mismatch", stack,
+          stack_trace[index]);
+    }
+  }
+}
+
+void Tracker::verify_lines(long pos, int line, const char* file) {
+  long index = pos - start;
+  if (code_lines.size() > index) {
+    if (code_lines[index] != line ||
+        (record_file_names && code_files[index] != file)) {
+      std::cout << "Line mismatch at position " << pos << ": "
+                << code_lines[index] << " vs " << line << std::endl;
+      if (record_file_names) {
+        std::cout << "File mismatch: " << code_files[index] << " vs " << file
+                  << std::endl;
+      }
+      Log(blunted::e_FatalError, "Line mismatch", "", "");
+    }
+  } else if (code_lines.size() < index) {
+    Log(blunted::e_FatalError, "Missing calls", "", "");
+  } else {
+    if (code_lines.size() > 2000000000) {
+      Log(blunted::e_FatalError, "Too many traces", "", "");
+    }
+    code_lines.push_back(line);
+    if (record_file_names) {
+      code_files.push_back(file);
     }
   }
 }
 
 void GameContext::ProcessState(EnvState* state) {
-  scenario_config->ProcessState(state);
+  state->process((void*)&rng, sizeof(rng));
+  state->process((void*)&rng_non_deterministic, sizeof(rng_non_deterministic));
+//  scenario_config->ProcessState(state);
+#ifdef FULL_VALIDATION
+  anims->ProcessState(state);
+#endif
   state->process(step);
 }

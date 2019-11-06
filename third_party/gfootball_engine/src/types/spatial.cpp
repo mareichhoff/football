@@ -90,7 +90,6 @@ void Spatial::SetName(const std::string &name) {
 
   void Spatial::SetRotation(const Quaternion &newRotation,
                             bool updateSpatialData) {
-    DO_VALIDATION;
     rotation = newRotation;
     if (updateSpatialData) RecursiveUpdateSpatialData(e_SpatialDataType_Both);
   }

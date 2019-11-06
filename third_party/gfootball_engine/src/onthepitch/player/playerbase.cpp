@@ -43,7 +43,6 @@ PlayerBase::~PlayerBase() {
 }
 
 void PlayerBase::Mirror() {
-  DO_VALIDATION;
   humanoid->Mirror();
 }
 
